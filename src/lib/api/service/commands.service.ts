@@ -1,20 +1,19 @@
-import { ApiClient } from '../client.api';
-import { 
-  CommandsResponse, 
-  UserCommandsResponse, 
-  CreateUserCommand,
-  CommandSearchParams,
-  UserCommandListParams,
-  UserCommandSearchParams,
-  UserCommand
-} from '@/types/commands';
-import { API_ENDPOINTS } from '@/config/api.config';
+import { ApiClient } from "../client.api";
+import { CommandsResponse, UserCommandsResponse } from "@/types/response.types";
+import { UserCommand } from "@/types/entities";
+import {
+  CommandRequestQuery,
+  UserCommandListRequestQuery,
+  UserCommandSearchRequestQuery,
+} from "@/types/request.types";
+import { CreateUsercommandRequest } from "@/types/request.types";
+import { API_ENDPOINTS } from "@/config/api.config";
 
 export class CommandsService {
   constructor(private apiClient: ApiClient) {}
 
   async searchSystemCommands(query: string): Promise<CommandsResponse> {
-    const params: CommandSearchParams = { command: query };
+    const params: CommandRequestQuery = { command: query };
     const response = await this.apiClient.get<CommandsResponse>(
       API_ENDPOINTS.COMMAND.SEARCH,
       { params }
@@ -22,7 +21,9 @@ export class CommandsService {
     return response.data;
   }
 
-  async getUserCommands(params?: UserCommandListParams): Promise<UserCommandsResponse> {
+  async getUserCommands(
+    params: UserCommandListRequestQuery
+  ): Promise<UserCommandsResponse> {
     const response = await this.apiClient.get<UserCommandsResponse>(
       API_ENDPOINTS.USER_COMMAND.LIST,
       { params }
@@ -31,7 +32,7 @@ export class CommandsService {
   }
 
   async searchUserCommands(args: string): Promise<UserCommandsResponse> {
-    const params: UserCommandSearchParams = { args };
+    const params: UserCommandSearchRequestQuery = { args };
     const response = await this.apiClient.get<UserCommandsResponse>(
       API_ENDPOINTS.USER_COMMAND.SEARCH,
       { params }
@@ -39,7 +40,9 @@ export class CommandsService {
     return response.data;
   }
 
-  async createUserCommand(command: CreateUserCommand): Promise<UserCommand> {
+  async createUserCommand(
+    command: CreateUsercommandRequest
+  ): Promise<UserCommand> {
     const response = await this.apiClient.post<UserCommand>(
       API_ENDPOINTS.USER_COMMAND.CREATE,
       command

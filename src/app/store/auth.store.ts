@@ -1,56 +1,49 @@
-import { create } from 'zustand';
-import { AuthState, AuthActions, RegisterUser, LoginUser, User, GenericAxiosError } from '@/types/auth';
-import { apiClient } from '@/lib/api';
+import { create } from "zustand";
+import apiClient from "@/lib/api/client.api";
+import { GenericAxiosError } from "@/types/error.types";
+import { AuthActions, AuthStates } from "@/types/store";
 
-interface ApiError {
-    statusText: string,
-    status: number,
-    data?: {
-      message?: string;
-    };
-}
-
-export const useAuthStore = create<AuthState & AuthActions>((set, get) => ({
+export const useAuthStore = create<AuthStates & AuthActions>((set, get) => ({
   user: null,
   isAuthenticated: false,
   isLoading: false,
   error: null,
 
-  login: async (credentials: LoginUser) => {
+  login: async (credentials) => {
     set({ isLoading: true, error: null });
     try {
       const response = await apiClient.auth.login(credentials);
       apiClient.setAuthToken(response.accessToken);
-      
-      set({ 
-        isAuthenticated: true, 
+
+      set({
+        isAuthenticated: true,
         isLoading: false,
-        user: null
+        user: null,
       });
     } catch (error: unknown) {
       const apiError = error as GenericAxiosError;
-      set({ 
-        error: apiError.data?.message || 'Login failed', 
-        isLoading: false 
+      set({
+        error: apiError.data?.message || "Login failed",
+        isLoading: false,
       });
       throw error;
     }
   },
 
-  register: async (userData: RegisterUser) => {
+  register: async (userData) => {
     set({ isLoading: true, error: null });
     try {
       const user = await apiClient.auth.register(userData);
-      set({ 
-        user, 
-        isAuthenticated: true, 
-        isLoading: false 
+      set({
+        user,
+        isAuthenticated: true,
+        isLoading: false,
       });
     } catch (error: unknown) {
       const apiError = error as GenericAxiosError;
-      set({ 
-        error: apiError.data?.message || 'Registration failed', 
-        isLoading: false 
+      set({
+        error: apiError.data?.message || "Registration failed",
+        isLoading: false,
       });
       throw error;
     }
@@ -58,10 +51,10 @@ export const useAuthStore = create<AuthState & AuthActions>((set, get) => ({
 
   logout: () => {
     apiClient.clearAuthToken();
-    set({ 
-      user: null, 
-      isAuthenticated: false, 
-      error: null 
+    set({
+      user: null,
+      isAuthenticated: false,
+      error: null,
     });
   },
 
@@ -79,7 +72,7 @@ export const useAuthStore = create<AuthState & AuthActions>((set, get) => ({
     set({ error: null });
   },
 
-  setUser: (user: User) => {
+  setUser: (user) => {
     set({ user, isAuthenticated: true });
   },
 }));
