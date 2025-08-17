@@ -1,27 +1,40 @@
-import { type NextRequest, NextResponse } from "next/server"
+import { type NextRequest, NextResponse } from "next/server";
 
 export async function GET(request: NextRequest) {
   try {
-    const { searchParams } = new URL(request.url)
-    const command = searchParams.get("command")
+    const { searchParams } = new URL(request.url);
+    const command = searchParams.get("command");
 
-    const response = await fetch(`${process.env.API_BASE_URL}/command?command=${encodeURIComponent(command || "")}`, {
-      method: "GET",
-      headers: {
-        "Content-Type": "application/json",
-        Authorization: request.headers.get("Authorization") || "",
-      },
-    })
-
+    const response = await fetch(
+      `${process.env.API_BASE_URL}/command?command=${encodeURIComponent(
+        command || ""
+      )}`,
+      {
+        method: "GET",
+        headers: {
+          "Content-Type": "application/json",
+          Authorization: request.headers.get("Authorization") || "",
+        },
+      }
+    );
+    console.log(response);
     if (!response.ok) {
-      const errorData = await response.json().catch(() => ({ message: "Command search failed" }))
-      return NextResponse.json({ message: errorData.message || "Command search failed" }, { status: response.status })
+      const errorData = await response
+        .json()
+        .catch(() => ({ message: "Command search failed" }));
+      return NextResponse.json(
+        { message: errorData.message || "Command search failed" },
+        { status: response.status }
+      );
     }
 
-    const data = await response.json()
-    return NextResponse.json(data)
+    const data = await response.json();
+    return NextResponse.json(data);
   } catch (error) {
-    console.error("Command search API error:", error)
-    return NextResponse.json({ message: "Network error - API server may be offline" }, { status: 500 })
+    console.error("Command search API error:", error);
+    return NextResponse.json(
+      { message: "Network error - API server may be offline" },
+      { status: 500 }
+    );
   }
 }
