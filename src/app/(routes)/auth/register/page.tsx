@@ -1,9 +1,9 @@
-import { TerminalRegisterForm } from "@/app/components/auth/terminal-register-form";
+"use client";
 
-export default function RegisterPage() {
+export default function registerPage() {
   return (
     <div className="min-h-screen bg-black flex items-center justify-center p-4">
-      <TerminalRegisterForm />
+      login
     </div>
   );
 }
