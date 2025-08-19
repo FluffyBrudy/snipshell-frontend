@@ -1,6 +1,7 @@
 import axios, { AxiosInstance, AxiosResponse, AxiosRequestConfig, AxiosError } from 'axios';
 import { AuthService } from './service/auth.service';
 import { CommandsService } from './service/commands.service';
+import { AUTH_REFRESH_TOKEN_POST } from '@/config/api.config';
 
 export class ApiClient {
   private client: AxiosInstance;
@@ -70,7 +71,7 @@ export class ApiClient {
     if (typeof route !== "string")
       return false
     const endPath = route.split("/").pop()
-    return !!endPath && (!(["login", "register"].includes(endPath)))
+    return !!endPath && (!(["login", "register", "refresh-token"].includes(endPath)))
   }
 
   async get<T>(url: string, config?: AxiosRequestConfig): Promise<AxiosResponse<T>> {
@@ -90,7 +91,9 @@ export class ApiClient {
   }
 
   async refreshToken() {
-    return this.client.post('/auth/refresh-token');
+    return this.client.post(AUTH_REFRESH_TOKEN_POST, {
+      withCredentials: true
+    });
   }
 
   setAuthToken(token: string) {

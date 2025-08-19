@@ -5,7 +5,7 @@ export async function GET(request: NextRequest) {
     const { searchParams } = new URL(request.url)
     const args = searchParams.get("args")
 
-    const response = await fetch(`${process.env.API_BASE_URL}/search?args=${encodeURIComponent(args || "")}`, {
+    const response = await fetch(`${process.env.API_BASE_URL}/usercommand/search?args=${encodeURIComponent(args || "")}`, {
       method: "GET",
       headers: {
         "Content-Type": "application/json",

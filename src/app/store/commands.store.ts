@@ -4,13 +4,17 @@ import apiClient from "@/lib/api/client.api";
 import { GenericAxiosError } from "@/types/error.types";
 import { CommandsActions, CommandStates } from "@/types/store";
 
+
 export const useCommandsStore = create<CommandStates & CommandsActions>(
   (set, get) => ({
     systemCommands: [],
     userCommands: [],
+    searchResults: [],
     isLoading: false,
+    isSearching: false,
     error: null,
     currentPage: 1,
+    paginationMeta: null,
 
     searchSystemCommands: async (query: string, store = false) => {
       set({ isLoading: true, error: null });
@@ -40,6 +44,7 @@ export const useCommandsStore = create<CommandStates & CommandsActions>(
         const response = await apiClient.commands.getUserCommands(params);
         set({
           userCommands: response.commands,
+          paginationMeta: response.meta,
           isLoading: false,
           currentPage: params?.page || 1,
         });
@@ -54,13 +59,13 @@ export const useCommandsStore = create<CommandStates & CommandsActions>(
     },
 
     searchUserCommands: async (args: string, store = false) => {
-      set({ isLoading: true, error: null });
+      set({ isSearching: true, error: null });
       try {
         const response = await apiClient.commands.searchUserCommands(args);
         if (store) {
           set({
-            userCommands: response.commands,
-            isLoading: false,
+            searchResults: response.commands,
+            isSearching: false,
           });
         } else {
           return { commands: response.commands };
@@ -69,7 +74,7 @@ export const useCommandsStore = create<CommandStates & CommandsActions>(
         const apiError = error as GenericAxiosError;
         set({
           error: apiError?.data?.message || "Failed to search user commands",
-          isLoading: false,
+          isSearching: false,
         });
         throw error;
       }
@@ -97,6 +102,10 @@ export const useCommandsStore = create<CommandStates & CommandsActions>(
 
     setCurrentPage: (page: number) => {
       set({ currentPage: page });
+    },
+
+    clearSearchResults: () => {
+      set({ searchResults: [] });
     },
   })
 );

@@ -1,6 +1,6 @@
 import { ApiClient } from "../client.api";
-import { CommandsResponse, UserCommandsResponse } from "@/types/response.types";
-import { UserCommand, Command } from "@/types/entities";
+import { CommandsResponse, UserCommandByUserIdResponse, UserCommandsResponse } from "@/types/response.types";
+import { UserCommand, Command, User } from "@/types/entities";
 import {
   CommandRequestQuery,
   UserCommandListRequestQuery,
@@ -24,7 +24,7 @@ export class CommandsService {
   async getUserCommands(
     params: UserCommandListRequestQuery
   ): Promise<UserCommandsResponse> {
-    const response = await this.apiClient.get<any>(
+    const response = await this.apiClient.get<UserCommandByUserIdResponse>(
       API_ENDPOINTS.USER_COMMAND.LIST,
       { params }
     );
@@ -58,7 +58,7 @@ export class CommandsService {
 
   async searchUserCommands(args: string): Promise<UserCommandsResponse> {
     const params: UserCommandSearchRequestQuery = { args };
-    const response = await this.apiClient.get<any[]>(
+    const response = await this.apiClient.get<UserCommand[]>(
       API_ENDPOINTS.USER_COMMAND.SEARCH,
       { params }
     );
@@ -79,7 +79,7 @@ export class CommandsService {
   async createUserCommand(
     command: CreateUsercommandRequest
   ): Promise<UserCommand> {
-    const response = await this.apiClient.post<any>(
+    const response = await this.apiClient.post<UserCommand>(
       API_ENDPOINTS.USER_COMMAND.CREATE,
       command
     );
@@ -94,5 +94,24 @@ export class CommandsService {
       command: data.command,
       tags: Array.isArray(data.tags) ? data.tags : [],
     };
+  }
+
+  async editUserCommand(
+    userCommandId: UserCommand['id'],
+    updateableFields: Partial<UserCommand>
+  ): Promise<UserCommand> {
+    const response = await this.apiClient.put<UserCommand>(
+      API_ENDPOINTS.USER_COMMAND.EDIT,
+      {updateableFields, id: userCommandId}
+    );
+    return response.data;
+  }
+
+  async deleteUserCommand(
+    userCommandId: UserCommand['id']
+  ): Promise<void> {
+    await this.apiClient.delete<void>(
+      API_ENDPOINTS.USER_COMMAND.EDIT, {params: {id: userCommandId}}
+    );
   }
 }

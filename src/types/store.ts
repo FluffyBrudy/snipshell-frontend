@@ -26,9 +26,12 @@ export interface AuthActions {
 export interface CommandStates {
   systemCommands: Command[];
   userCommands: UserCommand[];
+  searchResults: UserCommand[];
   isLoading: boolean;
+  isSearching: boolean;
   error: null | string;
   currentPage: number;
+  paginationMeta: UserCommandsResponse["meta"] | null;
 }
 
 export interface CommandsActions {
@@ -44,4 +47,5 @@ export interface CommandsActions {
   createUserCommand: (command: CreateUsercommandRequest) => Promise<void>;
   clearError: () => void;
   setCurrentPage: (page: number) => void;
+  clearSearchResults: () => void;
 }

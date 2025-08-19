@@ -1,283 +1,226 @@
 "use client";
 
-import type React from "react";
-
 import { useState } from "react";
+import { useForm } from "react-hook-form";
+import { zodResolver } from "@hookform/resolvers/zod";
+import { z } from "zod";
+import { useCommandsStore } from "@/app/store/commands.store";
 import { Button } from "@/app/components/ui/button";
 import { Input } from "@/app/components/ui/input";
 import { Label } from "@/app/components/ui/label";
-import { Textarea } from "@/app/components/ui/textarea";
+import { Dialog, DialogContent, DialogHeader, DialogTitle } from "@/app/components/ui/dialog";
 import { Badge } from "@/app/components/ui/badge";
-import {
-  Card,
-  CardContent,
-  CardHeader,
-  CardTitle,
-} from "@/app/components/ui/card";
-import { useCommandsStore } from "@/app/store/commands.store";
-import { X, Plus, Terminal, Save, Loader2 } from "lucide-react";
-import type { CreateUsercommandRequest } from "@/types/request.types";
+import { Separator } from "@/app/components/ui/separator";
+import { Command, X, Plus, Tag, FileText, Sparkles, Loader2 } from "lucide-react";
 
-interface CommandFormProps {
-  onClose: () => void;
-  initialCommand?: string;
+const commandSchema = z.object({
+	command: z.string().min(1, "Command is required"),
+	arguments: z.string().min(1, "Arguments are required"),
+});
+
+type CommandFormData = z.infer<typeof commandSchema>;
+
+interface Props {
+	onClose: () => void;
+	isOpen?: boolean;
 }
 
-interface NoteField {
-  id: string;
-  key: string;
-  value: string;
-}
+export function CommandForm({ onClose, isOpen = true }: Props) {
+	const { createUserCommand, isLoading } = useCommandsStore();
+	const [tagsInput, setTagsInput] = useState("");
+	const [noteFields, setNoteFields] = useState<Array<{ id: string; key: string; value: string }>>([
+		{ id: "1", key: "", value: "" },
+	]);
 
-export function CommandForm({
-  onClose,
-  initialCommand = "",
-}: CommandFormProps) {
-  const [command, setCommand] = useState(initialCommand);
-  const [arguments_, setArguments] = useState("");
-  const [tagsInput, setTagsInput] = useState("");
-  const [noteFields, setNoteFields] = useState<NoteField[]>([
-    { id: "1", key: "description", value: "" }
-  ]);
+	const tagRegex = /^[a-z]+(?:-[a-z0-9]+)*$/;
+	const tokens = tagsInput.split(/\s+/).map((t) => t.trim()).filter((t) => t.length > 0);
+	const validTags = tokens.filter((t) => tagRegex.test(t));
+	const invalidTags = tokens.filter((t) => !tagRegex.test(t));
 
-  const { createUserCommand, isLoading } = useCommandsStore();
+	const { register, handleSubmit, formState: { errors }, reset, watch } = useForm<CommandFormData>({
+		resolver: zodResolver(commandSchema),
+	});
 
-  // Tag validation regex
-  const tagRegex = /^[a-z]+(?:-[a-z0-9]+)*$/;
+	const watchedCommand = watch("command");
+	const watchedArgs = watch("arguments");
 
-  const handleTagsChange = (value: string) => {
-    setTagsInput(value);
-  };
+	const addNoteField = () => {
+		const newId = Date.now().toString();
+		setNoteFields([...noteFields, { id: newId, key: "", value: "" }]);
+	};
 
-  const getValidTags = (): string[] => {
-    return tagsInput
-      .split(/\s+/)
-      .map(tag => tag.trim())
-      .filter(tag => tag.length > 0 && tagRegex.test(tag));
-  };
+	const removeNoteField = (id: string) => {
+		if (noteFields.length === 1) return;
+		setNoteFields(noteFields.filter((f) => f.id !== id));
+	};
 
-  const addNoteField = () => {
-    const newId = Date.now().toString();
-    setNoteFields([...noteFields, { id: newId, key: "", value: "" }]);
-  };
+	const updateNoteField = (id: string, field: "key" | "value", value: string) => {
+		setNoteFields(noteFields.map((f) => (f.id === id ? { ...f, [field]: value } : f)));
+	};
 
-  const removeNoteField = (id: string) => {
-    if (noteFields.length > 1) {
-      setNoteFields(noteFields.filter(field => field.id !== id));
-    }
-  };
+	const onSubmit = async (data: CommandFormData) => {
+		try {
+			const noteObject: Record<string, string> = {};
+			noteFields.forEach((f) => {
+				const k = f.key.trim();
+				const v = f.value.trim();
+				if (k && v) noteObject[k] = v;
+			});
 
-  const updateNoteField = (id: string, fieldName: 'key' | 'value', value: string) => {
-    setNoteFields(noteFields.map(field => 
-      field.id === id ? { ...field, [fieldName]: value } : field
-    ));
-  };
+			await createUserCommand({
+				command: data.command,
+				arguments: data.arguments,
+				note: noteObject,
+				tags: validTags,
+			});
 
-  const handleSubmit = async (e: React.FormEvent) => {
-    e.preventDefault();
+			reset();
+			setTagsInput("");
+			setNoteFields([{ id: "1", key: "", value: "" }]);
+			onClose();
+		} catch (error) {
+			console.error("Failed to create command:", error);
+		}
+	};
 
-    if (!command.trim()) return;
+	return (
+		<Dialog open={isOpen} onOpenChange={onClose}>
+			<DialogContent className="max-w-2xl bg-slate-800/95 border-slate-700 backdrop-blur-sm max-h-[85vh] p-0">
+				<DialogHeader className="px-6 pt-6">
+					<DialogTitle className="flex items-center gap-2 text-slate-200">
+						<div className="p-2 bg-emerald-500/20 rounded-lg">
+							<Command className="w-5 h-5 text-emerald-400" />
+						</div>
+						<span className="text-xl font-bold text-gradient">
+							Add New Command
+						</span>
+					</DialogTitle>
+				</DialogHeader>
 
-    const base = command.trim();
-    const rawArgs = arguments_.trim();
-    const prefixRegex = new RegExp("^" + base.replace(/[.*+?^${}()|[\]\\]/g, "\\$&") + "\\s*", "i");
-    const normalizedArgs = rawArgs.replace(prefixRegex, "").trim();
+				<div className="overflow-y-auto p-6">
+					<form onSubmit={handleSubmit(onSubmit)} className="space-y-6">
+						<div className="grid grid-cols-1 md:grid-cols-2 gap-4">
+							<div className="space-y-2">
+								<Label htmlFor="command" className="text-slate-300">Command</Label>
+								<div className="relative">
+									<Command className="absolute left-3 top-1/2 transform -translate-y-1/2 w-4 h-4 text-slate-400" />
+									<Input
+										id="command"
+										{...register("command")}
+										placeholder="e.g., git, docker, npm"
+										className="pl-10 bg-slate-700/50 border-slate-600 text-slate-200 placeholder:text-slate-400 focus:border-emerald-500 focus:ring-emerald-500/20"
+									/>
+								</div>
+								{errors.command && <p className="text-red-400 text-sm">{errors.command.message}</p>}
+							</div>
 
-    // Convert note fields to Record<string, string>
-    const note: Record<string, string> = {};
-    noteFields.forEach(field => {
-      if (field.key.trim() && field.value.trim()) {
-        note[field.key.trim()] = field.value.trim();
-      }
-    });
+							<div className="space-y-2">
+								<Label htmlFor="arguments" className="text-slate-300">Arguments</Label>
+								<Input
+									id="arguments"
+									{...register("arguments")}
+									placeholder="e.g., commit -m 'message'"
+									className="bg-slate-700/50 border-slate-600 text-slate-200 placeholder:text-slate-400 focus:border-emerald-500 focus:ring-emerald-500/20"
+								/>
+								{errors.arguments && <p className="text-red-400 text-sm">{errors.arguments.message}</p>}
+							</div>
+						</div>
 
-    const commandData: CreateUsercommandRequest = {
-      command: base,
-      arguments: normalizedArgs,
-      note,
-      tags: getValidTags(),
-    };
+						<div className="space-y-2">
+							<Label className="text-slate-300 flex items-center gap-2">
+								<FileText className="w-4 h-4" />
+								Notes
+							</Label>
+							<div className="space-y-3">
+								{noteFields.map((field) => (
+									<div key={field.id} className="grid grid-cols-1 md:grid-cols-2 gap-2">
+										<Input
+											value={field.key}
+											onChange={(e) => updateNoteField(field.id, "key", e.target.value)}
+											placeholder="Key"
+											className="bg-slate-700/50 border-slate-600 text-slate-200 placeholder:text-slate-400 focus:border-emerald-500 focus:ring-emerald-500/20"
+										/>
+										<div className="flex gap-2">
+											<Input
+												value={field.value}
+												onChange={(e) => updateNoteField(field.id, "value", e.target.value)}
+												placeholder="Value"
+												className="flex-1 bg-slate-700/50 border-slate-600 text-slate-200 placeholder:text-slate-400 focus:border-emerald-500 focus:ring-emerald-500/20"
+											/>
+											{noteFields.length > 1 && (
+												<Button type="button" onClick={() => removeNoteField(field.id)} variant="outline" className="border-slate-600 text-slate-300 hover:bg-slate-700">
+													<X className="w-4 h-4" />
+												</Button>
+											)}
+										</div>
+									</div>
+								))}
+								<Button type="button" onClick={addNoteField} variant="outline" className="border-slate-600 text-slate-300 hover:bg-slate-700">
+									<Plus className="w-4 h-4 mr-2" />
+									Add Field
+								</Button>
+							</div>
+						</div>
 
-    try {
-      await createUserCommand(commandData);
-      onClose();
-    } catch (error) {
-      console.error("Failed to create command:", error);
-    }
-  };
+						<div className="space-y-2">
+							<Label className="text-slate-300 flex items-center gap-2">
+								<Tag className="w-4 h-4" />
+								Tags
+							</Label>
+							<Input
+								value={tagsInput}
+								onChange={(e) => setTagsInput(e.target.value)}
+								placeholder="space-separated, lowercase, hyphenated (e.g., git version-control)"
+								className="bg-slate-700/50 border-slate-600 text-slate-200 placeholder:text-slate-400 focus:border-emerald-500 focus:ring-emerald-500/20"
+							/>
+							{(validTags.length > 0 || invalidTags.length > 0) && (
+								<div className="flex flex-wrap gap-2">
+									{validTags.map((tag) => (
+										<Badge key={tag} variant="secondary" className="bg-emerald-500/20 text-emerald-300 border-emerald-500/30">
+											{tag}
+										</Badge>
+									))}
+									{invalidTags.map((tag) => (
+										<Badge key={tag} variant="secondary" className="bg-red-500/20 text-red-300 border-red-500/30">
+											{tag} (invalid)
+										</Badge>
+									))}
+								</div>
+							)}
+							<p className="text-xs text-slate-400">Each tag must match /^[a-z]+(?:-[a-z0-9]+)*$/ and be separated by spaces.</p>
+						</div>
 
-  const validTags = getValidTags();
-  const invalidTags = tagsInput
-    .split(/\s+/)
-    .map(tag => tag.trim())
-    .filter(tag => tag.length > 0 && !tagRegex.test(tag));
+						<Separator className="bg-slate-600" />
 
-  return (
-    <div className="fixed inset-0 bg-black/80 backdrop-blur-sm flex items-center justify-center z-50 p-4">
-      <Card className="w-full max-w-2xl bg-terminal-dark border-terminal-green/30 shadow-2xl shadow-terminal-green/10">
-        <CardHeader className="border-b border-terminal-green/20">
-          <div className="flex items-center justify-between">
-            <div className="flex items-center gap-2">
-              <Terminal className="h-5 w-5 text-terminal-green" />
-              <CardTitle className="text-terminal-green font-mono">
-                $ add-command
-              </CardTitle>
-            </div>
-            <Button
-              variant="ghost"
-              size="sm"
-              onClick={onClose}
-              className="text-terminal-green hover:bg-terminal-green/10"
-            >
-              <X className="h-4 w-4" />
-            </Button>
-          </div>
-        </CardHeader>
+						<div className="bg-slate-700/30 p-4 rounded-lg border border-slate-600">
+							<h4 className="text-sm font-medium text-slate-300 mb-2 flex items-center gap-2">
+								<Sparkles className="w-4 h-4 text-emerald-400" />
+								Preview
+							</h4>
+							<code className="text-sm font-mono text-emerald-300 bg-slate-800/50 px-3 py-2 rounded-lg border border-slate-600 block">
+								$ {watchedCommand || "command"} {watchedArgs || "arguments"}
+							</code>
+						</div>
 
-        <CardContent className="p-6 space-y-6">
-          <form onSubmit={handleSubmit} className="space-y-6">
-            <div className="space-y-2">
-              <Label htmlFor="command" className="text-terminal-cyan font-mono">
-                Command *
-              </Label>
-              <Input
-                id="command"
-                value={command}
-                onChange={(e) => setCommand(e.target.value)}
-                placeholder="git"
-                className="bg-terminal-darker border-terminal-green/30 text-terminal-green font-mono focus:border-terminal-cyan"
-                required
-              />
-            </div>
-
-            <div className="space-y-2">
-              <Label
-                htmlFor="arguments"
-                className="text-terminal-cyan font-mono"
-              >
-                Arguments
-              </Label>
-              <Input
-                id="arguments"
-                value={arguments_}
-                onChange={(e) => setArguments(e.target.value)}
-                placeholder="commit -m 'message'"
-                className="bg-terminal-darker border-terminal-green/30 text-terminal-green font-mono focus:border-terminal-cyan"
-              />
-            </div>
-
-            <div className="space-y-2">
-              <Label className="text-terminal-cyan font-mono">Notes</Label>
-              <div className="space-y-3">
-                {noteFields.map((field) => (
-                  <div key={field.id} className="flex gap-2">
-                    <Input
-                      value={field.key}
-                      onChange={(e) => updateNoteField(field.id, 'key', e.target.value)}
-                      placeholder="Key"
-                      className="bg-terminal-darker border-terminal-green/30 text-terminal-green font-mono focus:border-terminal-cyan"
-                    />
-                    <Input
-                      value={field.value}
-                      onChange={(e) => updateNoteField(field.id, 'value', e.target.value)}
-                      placeholder="Value"
-                      className="bg-terminal-darker border-terminal-green/30 text-terminal-green font-mono focus:border-terminal-cyan"
-                    />
-                    {noteFields.length > 1 && (
-                      <Button
-                        type="button"
-                        onClick={() => removeNoteField(field.id)}
-                        variant="outline"
-                        size="sm"
-                        className="border-terminal-green/30 text-terminal-green hover:bg-terminal-green/10 bg-transparent"
-                      >
-                        <X className="h-4 w-4" />
-                      </Button>
-                    )}
-                  </div>
-                ))}
-                <Button
-                  type="button"
-                  onClick={addNoteField}
-                  variant="outline"
-                  size="sm"
-                  className="border-terminal-green/30 text-terminal-green hover:bg-terminal-green/10 bg-transparent"
-                >
-                  <Plus className="h-4 w-4 mr-2" />
-                  Add Note Field
-                </Button>
-              </div>
-            </div>
-
-            <div className="space-y-2">
-              <Label className="text-terminal-cyan font-mono">Tags</Label>
-              <Input
-                value={tagsInput}
-                onChange={(e) => handleTagsChange(e.target.value)}
-                placeholder="git version-control (space separated, lowercase with hyphens)"
-                className="bg-terminal-darker border-terminal-green/30 text-terminal-green font-mono focus:border-terminal-cyan"
-              />
-              {validTags.length > 0 && (
-                <div className="flex flex-wrap gap-2 mt-2">
-                  {validTags.map((tag) => (
-                    <Badge
-                      key={tag}
-                      variant="outline"
-                      className="bg-terminal-green/10 border-terminal-green/30 text-terminal-green font-mono"
-                    >
-                      {tag}
-                    </Badge>
-                  ))}
-                </div>
-              )}
-              {invalidTags.length > 0 && (
-                <div className="flex flex-wrap gap-2 mt-2">
-                  {invalidTags.map((tag) => (
-                    <Badge
-                      key={tag}
-                      variant="outline"
-                      className="bg-red-500/10 border-red-500/30 text-red-400 font-mono"
-                    >
-                      {tag} (invalid)
-                    </Badge>
-                  ))}
-                </div>
-              )}
-              <p className="text-xs text-terminal-green/60">
-                Tags must be lowercase letters, can include hyphens and numbers after hyphens
-              </p>
-            </div>
-
-            <div className="flex justify-end gap-3 pt-4">
-              <Button
-                type="button"
-                variant="outline"
-                onClick={onClose}
-                className="border-terminal-green/30 text-terminal-green hover:bg-terminal-green/10 bg-transparent"
-              >
-                Cancel
-              </Button>
-              <Button
-                type="submit"
-                disabled={!command.trim() || isLoading}
-                className="bg-terminal-green text-terminal-dark hover:bg-terminal-green/90 font-mono"
-              >
-                {isLoading ? (
-                  <>
-                    <Loader2 className="h-4 w-4 mr-2 animate-spin" />
-                    Saving...
-                  </>
-                ) : (
-                  <>
-                    <Save className="h-4 w-4 mr-2" />
-                    Save Command
-                  </>
-                )}
-              </Button>
-            </div>
-          </form>
-        </CardContent>
-      </Card>
-    </div>
-  );
+						<div className="flex justify-end gap-3">
+							<Button type="button" variant="outline" onClick={onClose} className="border-slate-600 text-slate-300 hover:bg-slate-700">Cancel</Button>
+							<Button type="submit" disabled={isLoading} className="bg-emerald-600 hover:bg-emerald-700 text-white">
+								{isLoading ? (
+									<>
+										<Loader2 className="w-4 h-4 mr-2 animate-spin" />
+										Creating...
+									</>
+								) : (
+									<>
+										<Plus className="w-4 h-4 mr-2" />
+										Create Command
+									</>
+								)}
+							</Button>
+						</div>
+					</form>
+				</div>
+			</DialogContent>
+		</Dialog>
+	);
 }

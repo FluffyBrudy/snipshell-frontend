@@ -11,6 +11,7 @@ export const COMMAND_SEARCH_GET = '/api/command';
 export const USER_COMMAND_CREATE_POST = '/api/usercommand';
 export const USER_COMMAND_LIST_GET = '/api/usercommand';
 export const USER_COMMAND_SEARCH_GET = '/api/usercommand/search';
+export const USER_COMMAND_EDIT_PUT = '/api/usercommand';
 
 export const AUTH_ENDPOINTS = {
   REGISTER: AUTH_REGISTER_POST,
@@ -26,6 +27,7 @@ export const USER_COMMAND_ENDPOINTS = {
   CREATE: USER_COMMAND_CREATE_POST,
   LIST: USER_COMMAND_LIST_GET,
   SEARCH: USER_COMMAND_SEARCH_GET,
+  EDIT: USER_COMMAND_EDIT_PUT,
 } as const;
 
 export const APP_ENDPOINTS = {
