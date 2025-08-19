@@ -23,27 +23,54 @@ interface CommandFormProps {
   initialCommand?: string;
 }
 
+interface NoteField {
+  id: string;
+  key: string;
+  value: string;
+}
+
 export function CommandForm({
   onClose,
   initialCommand = "",
 }: CommandFormProps) {
   const [command, setCommand] = useState(initialCommand);
   const [arguments_, setArguments] = useState("");
-  const [note, setNote] = useState("");
-  const [tags, setTags] = useState<string[]>([]);
-  const [currentTag, setCurrentTag] = useState("");
+  const [tagsInput, setTagsInput] = useState("");
+  const [noteFields, setNoteFields] = useState<NoteField[]>([
+    { id: "1", key: "description", value: "" }
+  ]);
 
   const { createUserCommand, isLoading } = useCommandsStore();
 
-  const addTag = () => {
-    if (currentTag.trim() && !tags.includes(currentTag.trim())) {
-      setTags([...tags, currentTag.trim()]);
-      setCurrentTag("");
+  // Tag validation regex
+  const tagRegex = /^[a-z]+(?:-[a-z0-9]+)*$/;
+
+  const handleTagsChange = (value: string) => {
+    setTagsInput(value);
+  };
+
+  const getValidTags = (): string[] => {
+    return tagsInput
+      .split(/\s+/)
+      .map(tag => tag.trim())
+      .filter(tag => tag.length > 0 && tagRegex.test(tag));
+  };
+
+  const addNoteField = () => {
+    const newId = Date.now().toString();
+    setNoteFields([...noteFields, { id: newId, key: "", value: "" }]);
+  };
+
+  const removeNoteField = (id: string) => {
+    if (noteFields.length > 1) {
+      setNoteFields(noteFields.filter(field => field.id !== id));
     }
   };
 
-  const removeTag = (tagToRemove: string) => {
-    setTags(tags.filter((tag) => tag !== tagToRemove));
+  const updateNoteField = (id: string, fieldName: 'key' | 'value', value: string) => {
+    setNoteFields(noteFields.map(field => 
+      field.id === id ? { ...field, [fieldName]: value } : field
+    ));
   };
 
   const handleSubmit = async (e: React.FormEvent) => {
@@ -51,11 +78,24 @@ export function CommandForm({
 
     if (!command.trim()) return;
 
+    const base = command.trim();
+    const rawArgs = arguments_.trim();
+    const prefixRegex = new RegExp("^" + base.replace(/[.*+?^${}()|[\]\\]/g, "\\$&") + "\\s*", "i");
+    const normalizedArgs = rawArgs.replace(prefixRegex, "").trim();
+
+    // Convert note fields to Record<string, string>
+    const note: Record<string, string> = {};
+    noteFields.forEach(field => {
+      if (field.key.trim() && field.value.trim()) {
+        note[field.key.trim()] = field.value.trim();
+      }
+    });
+
     const commandData: CreateUsercommandRequest = {
-      command: command.trim(),
-      arguments: arguments_.trim(),
-      note: { description: note.trim() },
-      tags,
+      command: base,
+      arguments: normalizedArgs,
+      note,
+      tags: getValidTags(),
     };
 
     try {
@@ -65,6 +105,12 @@ export function CommandForm({
       console.error("Failed to create command:", error);
     }
   };
+
+  const validTags = getValidTags();
+  const invalidTags = tagsInput
+    .split(/\s+/)
+    .map(tag => tag.trim())
+    .filter(tag => tag.length > 0 && !tagRegex.test(tag));
 
   return (
     <div className="fixed inset-0 bg-black/80 backdrop-blur-sm flex items-center justify-center z-50 p-4">
@@ -121,61 +167,85 @@ export function CommandForm({
             </div>
 
             <div className="space-y-2">
-              <Label htmlFor="note" className="text-terminal-cyan font-mono">
-                Description
-              </Label>
-              <Textarea
-                id="note"
-                value={note}
-                onChange={(e) => setNote(e.target.value)}
-                placeholder="What does this command do?"
-                className="bg-terminal-darker border-terminal-green/30 text-terminal-green font-mono focus:border-terminal-cyan min-h-[80px]"
-              />
-            </div>
-
-            <div className="space-y-2">
-              <Label className="text-terminal-cyan font-mono">Tags</Label>
-              <div className="flex gap-2">
-                <Input
-                  value={currentTag}
-                  onChange={(e) => setCurrentTag(e.target.value)}
-                  onKeyUp={(e) =>
-                    e.key === "Enter" && (e.preventDefault(), addTag())
-                  }
-                  placeholder="Add a tag..."
-                  className="bg-terminal-darker border-terminal-green/30 text-terminal-green font-mono focus:border-terminal-cyan"
-                />
+              <Label className="text-terminal-cyan font-mono">Notes</Label>
+              <div className="space-y-3">
+                {noteFields.map((field) => (
+                  <div key={field.id} className="flex gap-2">
+                    <Input
+                      value={field.key}
+                      onChange={(e) => updateNoteField(field.id, 'key', e.target.value)}
+                      placeholder="Key"
+                      className="bg-terminal-darker border-terminal-green/30 text-terminal-green font-mono focus:border-terminal-cyan"
+                    />
+                    <Input
+                      value={field.value}
+                      onChange={(e) => updateNoteField(field.id, 'value', e.target.value)}
+                      placeholder="Value"
+                      className="bg-terminal-darker border-terminal-green/30 text-terminal-green font-mono focus:border-terminal-cyan"
+                    />
+                    {noteFields.length > 1 && (
+                      <Button
+                        type="button"
+                        onClick={() => removeNoteField(field.id)}
+                        variant="outline"
+                        size="sm"
+                        className="border-terminal-green/30 text-terminal-green hover:bg-terminal-green/10 bg-transparent"
+                      >
+                        <X className="h-4 w-4" />
+                      </Button>
+                    )}
+                  </div>
+                ))}
                 <Button
                   type="button"
-                  onClick={addTag}
+                  onClick={addNoteField}
                   variant="outline"
                   size="sm"
                   className="border-terminal-green/30 text-terminal-green hover:bg-terminal-green/10 bg-transparent"
                 >
-                  <Plus className="h-4 w-4" />
+                  <Plus className="h-4 w-4 mr-2" />
+                  Add Note Field
                 </Button>
               </div>
+            </div>
 
-              {tags.length > 0 && (
+            <div className="space-y-2">
+              <Label className="text-terminal-cyan font-mono">Tags</Label>
+              <Input
+                value={tagsInput}
+                onChange={(e) => handleTagsChange(e.target.value)}
+                placeholder="git version-control (space separated, lowercase with hyphens)"
+                className="bg-terminal-darker border-terminal-green/30 text-terminal-green font-mono focus:border-terminal-cyan"
+              />
+              {validTags.length > 0 && (
                 <div className="flex flex-wrap gap-2 mt-2">
-                  {tags.map((tag) => (
+                  {validTags.map((tag) => (
                     <Badge
                       key={tag}
                       variant="outline"
                       className="bg-terminal-green/10 border-terminal-green/30 text-terminal-green font-mono"
                     >
                       {tag}
-                      <button
-                        type="button"
-                        onClick={() => removeTag(tag)}
-                        className="ml-1 hover:text-red-400"
-                      >
-                        <X className="h-3 w-3" />
-                      </button>
                     </Badge>
                   ))}
                 </div>
               )}
+              {invalidTags.length > 0 && (
+                <div className="flex flex-wrap gap-2 mt-2">
+                  {invalidTags.map((tag) => (
+                    <Badge
+                      key={tag}
+                      variant="outline"
+                      className="bg-red-500/10 border-red-500/30 text-red-400 font-mono"
+                    >
+                      {tag} (invalid)
+                    </Badge>
+                  ))}
+                </div>
+              )}
+              <p className="text-xs text-terminal-green/60">
+                Tags must be lowercase letters, can include hyphens and numbers after hyphens
+              </p>
             </div>
 
             <div className="flex justify-end gap-3 pt-4">

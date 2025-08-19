@@ -14,4 +14,12 @@ export interface CommandsResponse {
 
 export interface UserCommandsResponse {
   commands: UserCommand[];
+  meta?: {
+    page: number;
+    pageSize: number;
+    total: number;
+    totalPages: number;
+    hasNextPage: boolean;
+    hasPrevPage: boolean;
+  };
 }

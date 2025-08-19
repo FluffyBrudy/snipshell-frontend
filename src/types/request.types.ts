@@ -1,4 +1,3 @@
-// Auth
 export interface RegisterUserRequest {
   displayName: string;
   email: string;

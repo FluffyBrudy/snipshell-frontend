@@ -8,6 +8,7 @@ export interface User {
 export interface Command {
   id?: number; // dont use id
   command: string;
+  similarity?: number;
 }
 
 export interface Tag {
@@ -17,10 +18,10 @@ export interface Tag {
 
 export interface UserCommand {
   id: number;
-  commandId: number;
   userId: number;
   arguments: string;
   note: Record<string, string>;
   createdAt: string;
+  command: Command;
   tags: Tag[];
 }

@@ -5,32 +5,68 @@ import { useCommandsStore } from "@/app/store/commands.store";
 import { Button } from "@/app/components/ui/button";
 import { Input } from "@/app/components/ui/input";
 import { Badge } from "@/app/components/ui/badge";
-import { Plus, Search, BookOpen, Tag, Calendar } from "lucide-react";
+import { Plus, Search, BookOpen, Tag, Calendar, Command } from "lucide-react";
 import type { UserCommand } from "@/types/entities";
+import { CommandForm } from "./command-form";
 
-export default function UserCommandsPanel() {
-  const { userCommands, getUserCommands, isLoading } = useCommandsStore();
+interface Props {
+  hideSearch?: boolean;
+}
+
+export default function UserCommandsPanel({ hideSearch = false }: Props) {
+  const { userCommands, getUserCommands, getUserCommandsByCommand, isLoading, currentPage } = useCommandsStore();
   const [searchQuery, setSearchQuery] = useState("");
   const [filteredCommands, setFilteredCommands] = useState<UserCommand[]>([]);
+  const [searchMode, setSearchMode] = useState<"all" | "byCommand" | "byArgs">("all");
+  const [selectedCommand, setSelectedCommand] = useState<{ id: number; name: string } | null>(null);
+  const [commandSearchQuery, setCommandSearchQuery] = useState("");
+  const [showCreate, setShowCreate] = useState(false);
+
+  const escapeRegExp = (s: string) => s.replace(/[.*+?^${}()|[\]\\]/g, "\\$&");
+  const getArgsTail = (uc: UserCommand) => {
+    const base = uc.command?.command || "";
+    if (!base) return uc.arguments;
+    return uc.arguments.replace(new RegExp("^" + escapeRegExp(base) + "\\s*", "i"), "");
+  };
 
   useEffect(() => {
     getUserCommands({ page: 1 });
   }, [getUserCommands]);
 
   useEffect(() => {
+    if (!userCommands) return;
+
+    if (hideSearch) {
+      setFilteredCommands(userCommands);
+      return;
+    }
+    
     if (searchQuery.trim()) {
-      const filtered = userCommands.filter(
-        (cmd) =>
-          cmd.arguments.toLowerCase().includes(searchQuery.toLowerCase()) ||
-          cmd.tags.some((tag) =>
-            tag.name.toLowerCase().includes(searchQuery.toLowerCase())
-          )
-      );
-      setFilteredCommands(filtered);
+      if (searchMode === "byCommand") {
+        const filtered = userCommands.filter(
+          (cmd) => (cmd.command?.command || "").toLowerCase().includes(searchQuery.toLowerCase())
+        );
+        setFilteredCommands(filtered);
+      } else if (searchMode === "byArgs") {
+        const filtered = userCommands.filter(
+          (cmd) => getArgsTail(cmd).toLowerCase().includes(searchQuery.toLowerCase())
+        );
+        setFilteredCommands(filtered);
+      } else {
+        const filtered = userCommands.filter(
+          (cmd) =>
+            (cmd.command?.command || "").toLowerCase().includes(searchQuery.toLowerCase()) ||
+            getArgsTail(cmd).toLowerCase().includes(searchQuery.toLowerCase()) ||
+            cmd.tags.some((tag) =>
+              tag.name.toLowerCase().includes(searchQuery.toLowerCase())
+            )
+        );
+        setFilteredCommands(filtered);
+      }
     } else {
       setFilteredCommands(userCommands);
     }
-  }, [searchQuery, userCommands]);
+  }, [searchQuery, userCommands, searchMode, hideSearch]);
 
   if (isLoading) {
     return (
@@ -52,7 +88,10 @@ export default function UserCommandsPanel() {
           <BookOpen className="w-5 h-5 inline mr-2" />
           My Commands
         </h3>
-        <Button className="bg-primary text-primary-foreground hover:bg-primary/90">
+        <Button 
+          onClick={() => setShowCreate(true)}
+          className="bg-primary text-primary-foreground hover:bg-primary/90"
+        >
           <Plus className="w-4 h-4 mr-2" />
           Add Command
         </Button>
@@ -89,9 +128,17 @@ export default function UserCommandsPanel() {
             >
               <div className="space-y-3">
                 <div>
-                  <code className="text-primary terminal-text font-mono text-sm block">
-                    $ {command.arguments}
+                  <div className="p-2 bg-primary/10 rounded-lg">
+                    <Command className="w-4 h-4 text-primary" />
+                  </div>
+                  <code className="text-lg font-mono text-primary terminal-text bg-primary/5 px-3 py-1 rounded-lg">
+                    $ {(command.command?.command || "")} {getArgsTail(command)}
                   </code>
+                  {command.command?.command && (
+                    <span className="text-xs text-muted-foreground bg-muted/20 px-2 py-1 rounded border border-muted/30">
+                      cmd: {command.command.command}
+                    </span>
+                  )}
                 </div>
 
                 {command.tags.length > 0 && (
@@ -145,6 +192,12 @@ export default function UserCommandsPanel() {
             </div>
           ))}
         </div>
+      )}
+
+      {showCreate && (
+        <CommandForm
+          onClose={() => setShowCreate(false)}
+        />
       )}
     </div>
   );

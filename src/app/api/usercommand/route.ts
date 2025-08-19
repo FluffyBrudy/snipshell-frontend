@@ -6,7 +6,7 @@ export async function GET(request: NextRequest) {
     const page = searchParams.get("page");
     const limit = searchParams.get("limit");
 
-    let url = process.env.API_BASE_URL!;
+    let url = `${process.env.API_BASE_URL}/usercommand`;
     const params = new URLSearchParams();
     if (page) params.append("page", page);
     if (limit) params.append("limit", limit);

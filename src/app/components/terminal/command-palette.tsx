@@ -4,7 +4,7 @@ import { useState, useRef, useEffect, useCallback } from "react";
 import { useCommandsStore } from "@/app/store/commands.store";
 import { Button } from "@/app/components/ui/button";
 import { Input } from "@/app/components/ui/input";
-import { Search, Plus, Zap } from "lucide-react";
+import { Search, Zap, Play } from "lucide-react";
 import type { Command } from "@/types/entities";
 
 export default function CommandPalette() {
@@ -16,7 +16,7 @@ export default function CommandPalette() {
   const inputRef = useRef<HTMLInputElement>(null);
 
   const handleSearch = useCallback(
-    (searchQuery: string) => async () => {
+    async (searchQuery: string) => {
       if (!searchQuery.trim()) {
         setSearchResults([]);
         setShowResults(false);
@@ -26,18 +26,34 @@ export default function CommandPalette() {
       setIsSearching(true);
       try {
         const response = await searchSystemCommands(searchQuery);
-        if (response) {
+        if (response && response.commands) {
           setSearchResults(response.commands);
           setShowResults(true);
+        } else {
+          setSearchResults([]);
+          setShowResults(false);
         }
       } catch (error) {
         console.error("Search failed:", error);
+        setSearchResults([]);
+        setShowResults(false);
       } finally {
         setIsSearching(false);
       }
     },
     [searchSystemCommands]
   );
+
+  const handleUseCommand = (command: Command) => {
+    // Copy command to clipboard or execute it
+    if (navigator.clipboard) {
+      navigator.clipboard.writeText(command.command);
+      // You could add a toast notification here
+      console.log(`Command "${command.command}" copied to clipboard`);
+    }
+    setShowResults(false);
+    setQuery("");
+  };
 
   useEffect(() => {
     const debounceTimer = setTimeout(() => {
@@ -110,10 +126,11 @@ export default function CommandPalette() {
                   <Button
                     size="sm"
                     variant="ghost"
+                    onClick={() => handleUseCommand(command)}
                     className="opacity-0 group-hover:opacity-100 transition-opacity"
                   >
-                    <Plus className="w-3 h-3 mr-1" />
-                    Save
+                    <Play className="w-3 h-3 mr-1" />
+                    Use
                   </Button>
                 </div>
               </div>
