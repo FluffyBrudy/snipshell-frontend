@@ -6,7 +6,7 @@ export interface User {
 }
 
 export interface Command {
-  id?: number; // dont use id
+  id?: number;
   command: string;
   similarity?: number;
 }

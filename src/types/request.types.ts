@@ -16,19 +16,15 @@ export interface CreateUsercommandRequest {
   tags: string[];
 }
 
-// /command?command=git
 export interface CommandRequestQuery {
   command: string;
 }
 
-// /usercommand?page=1&order=ASC|DESC
-// limit is set by backend so not allow here
 export interface UserCommandListRequestQuery {
   page?: number;
   order?: "ASC" | "DESC";
 }
 
-// /usercommand/search?args=git+commit
 export interface UserCommandSearchRequestQuery {
   args: string;
 }
