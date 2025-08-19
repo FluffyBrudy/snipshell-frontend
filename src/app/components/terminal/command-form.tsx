@@ -11,7 +11,8 @@ import { Label } from "@/app/components/ui/label";
 import { Dialog, DialogContent, DialogHeader, DialogTitle } from "@/app/components/ui/dialog";
 import { Badge } from "@/app/components/ui/badge";
 import { Separator } from "@/app/components/ui/separator";
-import { Command, X, Plus, Tag, FileText, Sparkles, Loader2 } from "lucide-react";
+import { Command, X, Plus, Tag, FileText, Sparkles, Loader2, HelpCircle } from "lucide-react";
+import { Tooltip, TooltipTrigger, TooltipContent } from "@/app/components/ui/tooltip";
 
 const commandSchema = z.object({
 	command: z.string().min(1, "Command is required"),
@@ -187,7 +188,32 @@ export function CommandForm({ onClose, isOpen = true }: Props) {
 									))}
 								</div>
 							)}
-							<p className="text-xs text-slate-400">Each tag must match /^[a-z]+(?:-[a-z0-9]+)*$/ and be separated by spaces.</p>
+							<div className="flex items-center gap-2">
+								<p className="text-xs text-slate-400">Use lowercase words with hyphens; separate multiple tags with spaces.</p>
+								<Tooltip>
+									<TooltipTrigger asChild>
+										<button
+											type="button"
+											aria-label="Tag format details"
+											className="inline-flex items-center justify-center rounded-full p-1 hover:bg-slate-700/60 text-slate-400 hover:text-slate-200 transition"
+										>
+											<HelpCircle className="w-4 h-4" />
+										</button>
+									</TooltipTrigger>
+									<TooltipContent side="top" sideOffset={6} className="bg-slate-800 text-slate-200 border border-slate-600 shadow-xl">
+										<div className="max-w-xs space-y-2">
+											<p className="text-xs text-slate-300">Regex pattern:</p>
+											<code className="block text-[11px] font-mono bg-slate-900/70 text-emerald-300 px-2 py-1 rounded border border-slate-700">/^[a-z]+(?:-[a-z0-9]+)*$/</code>
+											<ul className="list-disc pl-5 text-[11px] text-slate-300 space-y-1">
+												<li>Lowercase letters only</li>
+												<li>Hyphens allowed between words</li>
+												<li>Digits allowed after a hyphen</li>
+												<li>Separate multiple tags with spaces</li>
+											</ul>
+										</div>
+									</TooltipContent>
+								</Tooltip>
+							</div>
 						</div>
 
 						<Separator className="bg-slate-600" />
