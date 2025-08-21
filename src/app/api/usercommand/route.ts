@@ -75,3 +75,83 @@ export async function POST(request: NextRequest) {
     );
   }
 }
+
+export async function PUT(request: NextRequest) {
+  try {
+    const body = await request.json();
+    const { searchParams } = new URL(request.url);
+    const id = searchParams.get("id");
+    if (!id) {
+      return NextResponse.json(
+        { message: "User command ID is required" },
+        { status: 400 }
+      );
+    }
+    const response = await fetch(`${process.env.API_BASE_URL}/usercommand/${id}`, {
+      method: "PUT",
+      headers: {
+        "Content-Type": "application/json",
+        Authorization: request.headers.get("Authorization") || "",
+      },
+      body: JSON.stringify(body),
+    });
+
+    if (!response.ok) {
+      const errorData = await response
+        .json()
+        .catch(() => ({ message: "Failed to update user command" }));
+      return NextResponse.json(
+        { message: errorData.message || "Failed to update user command" },
+        { status: response.status }
+      );
+    }
+    
+    const data = await response.json();
+    return NextResponse.json(data);
+  } catch (error) {
+    console.error("[v0] Update user command API error:", error);
+    return NextResponse.json(
+      { message: "Network error - API server may be offline" },
+      { status: 500 }
+    );
+  }
+}
+
+export async function DELETE(request: NextRequest) {
+  try {
+    const { searchParams } = new URL(request.url);
+    const id = searchParams.get("id");
+    if (!id) {
+      return NextResponse.json(
+        { message: "User command ID is required" },
+        { status: 400 }
+      );
+    }
+    const response = await fetch(`${process.env.API_BASE_URL}/usercommand/${id}`, {
+      method: "DELETE",
+      headers: {
+        "Content-Type": "application/json",
+        Authorization: request.headers.get("Authorization") || "",
+      },
+    });
+
+    if (!response.ok) {
+      const errorData = await response
+        .json()
+        .catch(() => ({ message: "Failed to delete user command" }));
+      return NextResponse.json(
+        { message: errorData.message || "Failed to delete user command" },
+        { status: response.status }
+      );
+    }
+
+    const data = await response.json();
+    return NextResponse.json(data);
+  } catch (error) {
+    console.error("[v0] Delete user command API error:", error);
+    return NextResponse.json(
+      { message: "Network error - API server may be offline" },
+      { status: 500 }
+    );
+  }
+}

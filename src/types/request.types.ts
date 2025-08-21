@@ -16,6 +16,13 @@ export interface CreateUsercommandRequest {
   tags: string[];
 }
 
+export interface EditUsercommandRequest {
+  command: string;
+  arguments: string;
+  note: Record<string, string>;
+  tags: string[];
+}
+
 export interface CommandRequestQuery {
   command: string;
 }

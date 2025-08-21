@@ -3,6 +3,7 @@ import { CommandsResponse, UserCommandByUserIdResponse, UserCommandsResponse } f
 import { UserCommand, Command, User } from "@/types/entities";
 import {
   CommandRequestQuery,
+  EditUsercommandRequest,
   UserCommandListRequestQuery,
   UserCommandSearchRequestQuery,
 } from "@/types/request.types";
@@ -98,11 +99,12 @@ export class CommandsService {
 
   async editUserCommand(
     userCommandId: UserCommand['id'],
-    updateableFields: Partial<UserCommand>
+    updateableFields: Partial<EditUsercommandRequest>
   ): Promise<UserCommand> {
     const response = await this.apiClient.put<UserCommand>(
       API_ENDPOINTS.USER_COMMAND.EDIT,
-      {updateableFields, id: userCommandId}
+      updateableFields,
+      {params: {id: userCommandId}}
     );
     return response.data;
   }
