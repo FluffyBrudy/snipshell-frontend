@@ -1,6 +1,6 @@
 "use client";
 
-import { useState } from "react";
+import { useEffect, useMemo, useState } from "react";
 import { useForm } from "react-hook-form";
 import { zodResolver } from "@hookform/resolvers/zod";
 import { z } from "zod";
@@ -24,10 +24,19 @@ type CommandFormData = z.infer<typeof commandSchema>;
 interface Props {
 	onClose: () => void;
 	isOpen?: boolean;
+	initialCommand?: string;
+	mode?: "create" | "edit";
+	userCommandId?: number;
+	initialValues?: {
+		command?: string;
+		arguments?: string;
+		note?: Record<string, string>;
+		tags?: string[];
+	};
 }
 
-export function CommandForm({ onClose, isOpen = true }: Props) {
-	const { createUserCommand, isLoading } = useCommandsStore();
+export function CommandForm({ onClose, isOpen = true, initialCommand, mode = "create", userCommandId, initialValues }: Props) {
+	const { createUserCommand, editUserCommand, isLoading } = useCommandsStore();
 	const [tagsInput, setTagsInput] = useState("");
 	const [noteFields, setNoteFields] = useState<Array<{ id: string; key: string; value: string }>>([
 		{ id: "1", key: "", value: "" },
@@ -59,6 +68,38 @@ export function CommandForm({ onClose, isOpen = true }: Props) {
 		setNoteFields(noteFields.map((f) => (f.id === id ? { ...f, [field]: value } : f)));
 	};
 
+	const normalizedInitial = useMemo(() => ({
+		command: initialValues?.command ?? initialCommand ?? "",
+		arguments: initialValues?.arguments ?? "",
+		note: initialValues?.note ?? {},
+		tags: initialValues?.tags ?? [],
+	}), [initialValues, initialCommand]);
+
+	useEffect(() => {
+		if (mode === "edit") {
+			reset({
+				command: normalizedInitial.command,
+				arguments: normalizedInitial.arguments,
+			});
+
+			const tags = (normalizedInitial.tags || []).join(" ");
+			setTagsInput(tags);
+
+			const entries = Object.entries(normalizedInitial.note || {});
+			if (entries.length > 0) {
+				setNoteFields(entries.map(([key, value], idx) => ({ id: `${idx + 1}`, key, value })));
+			} else {
+				setNoteFields([{ id: "1", key: "", value: "" }]);
+			}
+		} else if (initialCommand) {
+			reset({
+				command: initialCommand,
+				arguments: "",
+			});
+		}
+		// eslint-disable-next-line react-hooks/exhaustive-deps
+	}, [mode, initialCommand, normalizedInitial.command, normalizedInitial.arguments]);
+
 	const onSubmit = async (data: CommandFormData) => {
 		try {
 			const noteObject: Record<string, string> = {};
@@ -68,19 +109,34 @@ export function CommandForm({ onClose, isOpen = true }: Props) {
 				if (k && v) noteObject[k] = v;
 			});
 
-			await createUserCommand({
-				command: data.command,
-				arguments: data.arguments,
-				note: noteObject,
-				tags: validTags,
-			});
+
+			if (mode === "edit" && userCommandId) {
+				const changed: Partial<{ command: string; arguments: string; note: Record<string, string>; tags: string[] }> = {};
+				if (data.command !== normalizedInitial.command) changed.command = data.command;
+				if (data.arguments !== normalizedInitial.arguments) changed.arguments = data.arguments;
+				const initialTagsSorted = [...(normalizedInitial.tags || [])].sort();
+				const newTagsSorted = [...validTags].sort();
+				if (JSON.stringify(initialTagsSorted) !== JSON.stringify(newTagsSorted)) changed.tags = validTags;
+				if (JSON.stringify(noteObject) !== JSON.stringify(normalizedInitial.note || {})) changed.note = noteObject;
+
+				if (Object.keys(changed).length > 0) {
+					await editUserCommand(userCommandId, changed);
+				}
+			} else {
+				await createUserCommand({
+					command: data.command,
+					arguments: data.arguments,
+					note: noteObject,
+					tags: validTags,
+				});
+			}
 
 			reset();
 			setTagsInput("");
 			setNoteFields([{ id: "1", key: "", value: "" }]);
 			onClose();
 		} catch (error) {
-			console.error("Failed to create command:", error);
+			console.error("Failed to submit command:", error);
 		}
 	};
 
@@ -93,7 +149,7 @@ export function CommandForm({ onClose, isOpen = true }: Props) {
 							<Command className="w-5 h-5 text-emerald-400" />
 						</div>
 						<span className="text-xl font-bold text-gradient">
-							Add New Command
+							{mode === "edit" ? "Edit Command" : "Add New Command"}
 						</span>
 					</DialogTitle>
 				</DialogHeader>
@@ -234,12 +290,12 @@ export function CommandForm({ onClose, isOpen = true }: Props) {
 								{isLoading ? (
 									<>
 										<Loader2 className="w-4 h-4 mr-2 animate-spin" />
-										Creating...
+										{mode === "edit" ? "Saving..." : "Creating..."}
 									</>
 								) : (
 									<>
 										<Plus className="w-4 h-4 mr-2" />
-										Create Command
+										{mode === "edit" ? "Save Changes" : "Create Command"}
 									</>
 								)}
 							</Button>

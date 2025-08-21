@@ -37,13 +37,18 @@ export default function Home() {
     getUserCommands, 
     searchUserCommands, 
     clearSearchResults,
-    setCurrentPage 
+    setCurrentPage,
+    deleteUserCommand,
   } = useCommandsStore();
   
   const [activeTab, setActiveTab] = useState<"all" | "search">("all");
   const [searchQuery, setSearchQuery] = useState("");
   const [terminalReady, setTerminalReady] = useState(false);
   const [showCreateForm, setShowCreateForm] = useState(false);
+  const [editing, setEditing] = useState<null | {
+    id: number;
+    initialValues: { command?: string; arguments?: string; note?: Record<string, string>; tags?: string[] };
+  }>(null);
 
   useEffect(() => {
     const timer = setTimeout(() => setTerminalReady(true), 500);
@@ -251,10 +256,32 @@ export default function Home() {
                                 </span>
                               </div>
                               <div className="flex gap-2">
-                                <Button size="sm" variant="ghost" className="text-slate-300 hover:text-emerald-400 hover:bg-slate-600/50">
+                                <Button 
+                                  size="sm" 
+                                  variant="ghost" 
+                                  className="text-slate-300 hover:text-emerald-400 hover:bg-slate-600/50"
+                                  onClick={() => {
+                                    setEditing({
+                                      id: command.id,
+                                      initialValues: {
+                                        command: command.command?.command || "",
+                                        arguments: getArgsTail(command),
+                                        note: command.note || {},
+                                        tags: command.tags?.map(t => t.name) || [],
+                                      },
+                                    });
+                                  }}
+                                >
                                   Edit
                                 </Button>
-                                <Button size="sm" variant="ghost" className="text-red-400 hover:text-red-300 hover:bg-red-500/10">
+                                <Button 
+                                  size="sm" 
+                                  variant="ghost" 
+                                  className="text-red-400 hover:text-red-300 hover:bg-red-500/10"
+                                  onClick={async () => {
+                                    await deleteUserCommand(command.id);
+                                  }}
+                                >
                                   Delete
                                 </Button>
                               </div>
@@ -306,6 +333,16 @@ export default function Home() {
         <CommandForm 
           onClose={() => setShowCreateForm(false)}
           isOpen={showCreateForm}
+        />
+      )}
+
+      {editing && (
+        <CommandForm
+          onClose={() => setEditing(null)}
+          isOpen
+          mode="edit"
+          userCommandId={editing.id}
+          initialValues={editing.initialValues}
         />
       )}
     </div>

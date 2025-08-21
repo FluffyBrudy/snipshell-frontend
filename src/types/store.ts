@@ -1,6 +1,7 @@
 import { Command, User, UserCommand } from "./entities";
 import {
   CreateUsercommandRequest,
+  EditUsercommandRequest,
   LoginUserRequest,
   RegisterUserRequest,
   UserCommandListRequestQuery,
@@ -45,6 +46,11 @@ export interface CommandsActions {
     store?: boolean
   ) => Promise<UserCommandsResponse | undefined>;
   createUserCommand: (command: CreateUsercommandRequest) => Promise<void>;
+  editUserCommand: (
+    userCommandId: UserCommand["id"],
+    updateableFields: Partial<EditUsercommandRequest>
+  ) => Promise<void>;
+  deleteUserCommand: (userCommandId: UserCommand["id"]) => Promise<void>;
   clearError: () => void;
   setCurrentPage: (page: number) => void;
   clearSearchResults: () => void;

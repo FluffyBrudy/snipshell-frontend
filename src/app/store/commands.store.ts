@@ -96,6 +96,38 @@ export const useCommandsStore = create<CommandStates & CommandsActions>(
       }
     },
 
+    editUserCommand: async (userCommandId, updateableFields) => {
+      set({ isLoading: true, error: null });
+      try {
+        await apiClient.commands.editUserCommand(userCommandId, updateableFields);
+        await get().getUserCommands({ page: get().currentPage });
+        set({ isLoading: false });
+      } catch (error: unknown) {
+        const apiError = error as GenericAxiosError;
+        set({
+          error: apiError.data?.message || "Failed to update user command",
+          isLoading: false,
+        });
+        throw error;
+      }
+    },
+
+    deleteUserCommand: async (userCommandId) => {
+      set({ isLoading: true, error: null });
+      try {
+        await apiClient.commands.deleteUserCommand(userCommandId);
+        await get().getUserCommands({ page: get().currentPage });
+        set({ isLoading: false });
+      } catch (error: unknown) {
+        const apiError = error as GenericAxiosError;
+        set({
+          error: apiError.data?.message || "Failed to delete user command",
+          isLoading: false,
+        });
+        throw error;
+      }
+    },
+
     clearError: () => {
       set({ error: null });
     },

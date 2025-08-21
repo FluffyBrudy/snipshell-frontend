@@ -14,13 +14,17 @@ interface Props {
 }
 
 export default function UserCommandsPanel({ hideSearch = false }: Props) {
-  const { userCommands, getUserCommands, getUserCommandsByCommand, isLoading, currentPage } = useCommandsStore();
+  const { userCommands, getUserCommands, isLoading, currentPage, editUserCommand, deleteUserCommand } = useCommandsStore();
   const [searchQuery, setSearchQuery] = useState("");
   const [filteredCommands, setFilteredCommands] = useState<UserCommand[]>([]);
   const [searchMode, setSearchMode] = useState<"all" | "byCommand" | "byArgs">("all");
   const [selectedCommand, setSelectedCommand] = useState<{ id: number; name: string } | null>(null);
   const [commandSearchQuery, setCommandSearchQuery] = useState("");
   const [showCreate, setShowCreate] = useState(false);
+  const [editing, setEditing] = useState<null | {
+    id: number;
+    initialValues: { command?: string; arguments?: string; note?: Record<string, string>; tags?: string[] };
+  }>(null);
 
   const escapeRegExp = (s: string) => s.replace(/[.*+?^${}()|[\]\\]/g, "\\$&");
   const getArgsTail = (uc: UserCommand) => {
@@ -89,7 +93,7 @@ export default function UserCommandsPanel({ hideSearch = false }: Props) {
           My Commands
         </h3>
         <Button 
-          onClick={() => setShowCreate(true)}
+          onClick={() => { console.log("Add Command clicked"); setShowCreate(true) }}
           className="bg-primary text-primary-foreground hover:bg-primary/90"
         >
           <Plus className="w-4 h-4 mr-2" />
@@ -176,13 +180,33 @@ export default function UserCommandsPanel({ hideSearch = false }: Props) {
                     </span>
                   </div>
                   <div className="flex space-x-2">
-                    <Button size="sm" variant="ghost" className="text-xs">
+                    <Button
+                      size="sm"
+                      variant="ghost"
+                      className="text-xs"
+                      onClick={() => {
+                        console.log("Edit clicked", command.id)
+                        setEditing({
+                          id: command.id,
+                          initialValues: {
+                            command: command.command?.command || "",
+                            arguments: (command.arguments || "").replace(new RegExp("^" + (command.command?.command || "") + "\\s*", "i"), "").trim(),
+                            note: command.note || {},
+                            tags: command.tags?.map(t => t.name) || [],
+                          },
+                        });
+                      }}
+                    >
                       Edit
                     </Button>
                     <Button
                       size="sm"
                       variant="ghost"
                       className="text-xs text-destructive"
+                      onClick={async () => {
+                        console.log("Delete clicked", command.id)
+                        await deleteUserCommand(command.id);
+                      }}
                     >
                       Delete
                     </Button>
@@ -197,6 +221,18 @@ export default function UserCommandsPanel({ hideSearch = false }: Props) {
       {showCreate && (
         <CommandForm
           onClose={() => setShowCreate(false)}
+          isOpen
+          mode="create"
+        />
+      )}
+
+      {editing && (
+        <CommandForm
+          onClose={() => setEditing(null)}
+          isOpen
+          mode="edit"
+          userCommandId={editing.id}
+          initialValues={editing.initialValues}
         />
       )}
     </div>
