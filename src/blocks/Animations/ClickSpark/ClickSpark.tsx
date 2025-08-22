@@ -1,7 +1,7 @@
 /*
 	Installed from https://reactbits.dev/ts/tailwind/
 */
-
+"use client";
 import React, { useRef, useEffect, useCallback } from "react";
 
 interface ClickSparkProps {
@@ -82,7 +82,7 @@ const ClickSpark: React.FC<ClickSparkProps> = ({
           return t * (2 - t);
       }
     },
-    [easing],
+    [easing]
   );
 
   useEffect(() => {
