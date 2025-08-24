@@ -1,6 +1,10 @@
 import { ApiClient } from "../client.api";
-import { CommandsResponse, UserCommandByUserIdResponse, UserCommandsResponse } from "@/types/response.types";
-import { UserCommand, Command, User } from "@/types/entities";
+import {
+  CommandsResponse,
+  UserCommandByUserIdResponse,
+  UserCommandsResponse,
+} from "@/types/response.types";
+import { UserCommand, Command } from "@/types/entities";
 import {
   CommandRequestQuery,
   EditUsercommandRequest,
@@ -32,11 +36,14 @@ export class CommandsService {
 
     if (response.data?.commands?.data) {
       const c = response.data.commands;
-      const transformed: UserCommand[] = c.data.map((item: any) => ({
+      const transformed: UserCommand[] = c.data.map((item: UserCommand) => ({
         id: item.id,
         userId: item.userId,
         arguments: item.arguments,
-        note: typeof item.note === "string" ? JSON.parse(item.note) : item.note || {},
+        note:
+          typeof item.note === "string"
+            ? JSON.parse(item.note)
+            : item.note || {},
         createdAt: item.createdAt,
         command: item.command,
         tags: Array.isArray(item.tags) ? item.tags : [],
@@ -64,11 +71,14 @@ export class CommandsService {
       { params }
     );
 
-    const transformed: UserCommand[] = (Array.isArray(response.data) ? response.data : []).map((item: any) => ({
+    const transformed: UserCommand[] = (
+      Array.isArray(response.data) ? response.data : []
+    ).map((item: UserCommand) => ({
       id: item.id,
       userId: item.userId,
       arguments: item.arguments,
-      note: typeof item.note === "string" ? JSON.parse(item.note) : item.note || {},
+      note:
+        typeof item.note === "string" ? JSON.parse(item.note) : item.note || {},
       createdAt: item.createdAt,
       command: item.command,
       tags: Array.isArray(item.tags) ? item.tags : [],
@@ -90,7 +100,8 @@ export class CommandsService {
       id: data.id,
       userId: data.userId,
       arguments: data.arguments,
-      note: typeof data.note === "string" ? JSON.parse(data.note) : data.note || {},
+      note:
+        typeof data.note === "string" ? JSON.parse(data.note) : data.note || {},
       createdAt: data.createdAt,
       command: data.command,
       tags: Array.isArray(data.tags) ? data.tags : [],
@@ -98,22 +109,20 @@ export class CommandsService {
   }
 
   async editUserCommand(
-    userCommandId: UserCommand['id'],
+    userCommandId: UserCommand["id"],
     updateableFields: Partial<EditUsercommandRequest>
   ): Promise<UserCommand> {
     const response = await this.apiClient.put<UserCommand>(
       API_ENDPOINTS.USER_COMMAND.EDIT,
       updateableFields,
-      {params: {id: userCommandId}}
+      { params: { id: userCommandId } }
     );
     return response.data;
   }
 
-  async deleteUserCommand(
-    userCommandId: UserCommand['id']
-  ): Promise<void> {
-    await this.apiClient.delete<void>(
-      API_ENDPOINTS.USER_COMMAND.EDIT, {params: {id: userCommandId}}
-    );
+  async deleteUserCommand(userCommandId: UserCommand["id"]): Promise<void> {
+    await this.apiClient.delete<void>(API_ENDPOINTS.USER_COMMAND.EDIT, {
+      params: { id: userCommandId },
+    });
   }
 }
