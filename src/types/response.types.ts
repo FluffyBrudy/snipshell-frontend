@@ -41,5 +41,5 @@ export interface UserCommandByUserIdResponse {
     totalPages: number;
     hasNextPage: boolean;
     hasPrevPage: boolean;
-  }
+  };
 }

@@ -1,5 +1,7 @@
 "use client";
 
+import type React from "react";
+
 import { useEffect, useState } from "react";
 import { useAuthStore } from "@/app/store/auth.store";
 import { useCommandsStore } from "@/app/store/commands.store";
@@ -25,9 +27,10 @@ import {
   Sparkles,
   Terminal,
   Loader2,
+  X,
 } from "lucide-react";
 import AuthPage from "@/app/(routes)/auth/page";
-import { UserCommand } from "@/types/entities";
+import type { UserCommand } from "@/types/entities";
 import { CommandForm } from "@/app/components/terminal/command-form";
 
 export default function Home() {
@@ -40,6 +43,7 @@ export default function Home() {
     isSearching,
     getUserCommands,
     searchUserCommands,
+    searchUserCommandsByTags,
     clearSearchResults,
     setCurrentPage,
     deleteUserCommand,
@@ -47,6 +51,9 @@ export default function Home() {
 
   const [activeTab, setActiveTab] = useState<"all" | "search">("all");
   const [searchQuery, setSearchQuery] = useState("");
+  const [tagSearchInput, setTagSearchInput] = useState("");
+  const [selectedTags, setSelectedTags] = useState<string[]>([]);
+  const [searchMode, setSearchMode] = useState<"text" | "tags">("text");
   const [terminalReady, setTerminalReady] = useState(false);
   const [showCreateForm, setShowCreateForm] = useState(false);
   const [editing, setEditing] = useState<null | {
@@ -71,9 +78,15 @@ export default function Home() {
   }, [isAuthenticated, getUserCommands]);
 
   useEffect(() => {
-    if (searchQuery.trim()) {
+    if (searchMode === "text" && searchQuery.trim()) {
       const timeoutId = setTimeout(() => {
         searchUserCommands(searchQuery, true);
+        setActiveTab("search");
+      }, 300);
+      return () => clearTimeout(timeoutId);
+    } else if (searchMode === "tags" && selectedTags.length > 0) {
+      const timeoutId = setTimeout(() => {
+        searchUserCommandsByTags(selectedTags, true);
         setActiveTab("search");
       }, 300);
       return () => clearTimeout(timeoutId);
@@ -81,7 +94,14 @@ export default function Home() {
       clearSearchResults();
       setActiveTab("all");
     }
-  }, [searchQuery, searchUserCommands, clearSearchResults]);
+  }, [
+    searchQuery,
+    selectedTags,
+    searchMode,
+    searchUserCommands,
+    searchUserCommandsByTags,
+    clearSearchResults,
+  ]);
 
   const handlePageChange = (direction: "prev" | "next") => {
     if (!paginationMeta) return;
@@ -101,7 +121,32 @@ export default function Home() {
     return uc.arguments.replace(new RegExp("^" + base + "\\s*", "i"), "");
   };
 
+  const handleTagInput = (e: React.KeyboardEvent<HTMLInputElement>) => {
+    if (e.key === "Enter" && tagSearchInput.trim()) {
+      const newTag = tagSearchInput.trim();
+      if (!selectedTags.includes(newTag)) {
+        setSelectedTags([...selectedTags, newTag]);
+      }
+      setTagSearchInput("");
+    }
+  };
+
+  const removeTag = (tagToRemove: string) => {
+    setSelectedTags(selectedTags.filter((tag) => tag !== tagToRemove));
+  };
+
+  const clearAllSearch = () => {
+    setSearchQuery("");
+    setTagSearchInput("");
+    setSelectedTags([]);
+    clearSearchResults();
+    setActiveTab("all");
+  };
+
   const displayCommands = activeTab === "search" ? searchResults : userCommands;
+  const hasActiveSearch =
+    (searchMode === "text" && searchQuery.trim()) ||
+    (searchMode === "tags" && selectedTags.length > 0);
 
   if (!isAuthenticated) {
     return <AuthPage />;
@@ -145,15 +190,99 @@ export default function Home() {
               </div>
             </CardHeader>
             <CardContent className="space-y-6">
-              <div className="relative">
-                <Search className="absolute left-3 top-1/2 transform -translate-y-1/2 w-4 h-4 text-slate-400" />
-                <Input
-                  value={searchQuery}
-                  onChange={(e) => setSearchQuery(e.target.value)}
-                  placeholder="Search your commands, arguments, or tags..."
-                  className="pl-10 bg-slate-700/50 border-slate-600 text-slate-200 placeholder:text-slate-400 focus:border-emerald-500 focus:ring-emerald-500/20"
-                />
+              <div className="flex items-center gap-2 mb-4">
+                <Button
+                  size="sm"
+                  variant={searchMode === "text" ? "default" : "outline"}
+                  onClick={() => {
+                    setSearchMode("text");
+                    setSelectedTags([]);
+                    clearSearchResults();
+                  }}
+                  className={
+                    searchMode === "text"
+                      ? "bg-emerald-600 text-white"
+                      : "border-slate-600 text-slate-300"
+                  }
+                >
+                  <Search className="w-4 h-4 mr-2" />
+                  Text Search
+                </Button>
+                <Button
+                  size="sm"
+                  variant={searchMode === "tags" ? "default" : "outline"}
+                  onClick={() => {
+                    setSearchMode("tags");
+                    setSearchQuery("");
+                    clearSearchResults();
+                  }}
+                  className={
+                    searchMode === "tags"
+                      ? "bg-blue-600 text-white"
+                      : "border-slate-600 text-slate-300"
+                  }
+                >
+                  <Tag className="w-4 h-4 mr-2" />
+                  Tag Search
+                </Button>
+                {hasActiveSearch && (
+                  <Button
+                    size="sm"
+                    variant="ghost"
+                    onClick={clearAllSearch}
+                    className="text-slate-400 hover:text-slate-200"
+                  >
+                    <X className="w-4 h-4 mr-2" />
+                    Clear
+                  </Button>
+                )}
               </div>
+
+              {searchMode === "text" ? (
+                <div className="relative">
+                  <Search className="absolute left-3 top-1/2 transform -translate-y-1/2 w-4 h-4 text-slate-400" />
+                  <Input
+                    value={searchQuery}
+                    onChange={(e) => setSearchQuery(e.target.value)}
+                    placeholder="Search your commands, arguments, or content..."
+                    className="pl-10 bg-slate-700/50 border-slate-600 text-slate-200 placeholder:text-slate-400 focus:border-emerald-500 focus:ring-emerald-500/20"
+                  />
+                </div>
+              ) : (
+                <div className="space-y-3">
+                  <div className="relative">
+                    <Tag className="absolute left-3 top-1/2 transform -translate-y-1/2 w-4 h-4 text-slate-400" />
+                    <Input
+                      value={tagSearchInput}
+                      onChange={(e) => setTagSearchInput(e.target.value)}
+                      onKeyDown={handleTagInput}
+                      placeholder="Type tags and press Enter (e.g., git, docker, linux)..."
+                      className="pl-10 bg-slate-700/50 border-slate-600 text-slate-200 placeholder:text-slate-400 focus:border-blue-500 focus:ring-blue-500/20"
+                    />
+                  </div>
+                  {selectedTags.length > 0 && (
+                    <div className="flex flex-wrap gap-2">
+                      {selectedTags.map((tag) => (
+                        <Badge
+                          key={tag}
+                          variant="secondary"
+                          className="bg-blue-600/20 text-blue-300 border-blue-500/50 pr-1"
+                        >
+                          {tag}
+                          <Button
+                            size="sm"
+                            variant="ghost"
+                            onClick={() => removeTag(tag)}
+                            className="ml-1 h-4 w-4 p-0 hover:bg-blue-500/20"
+                          >
+                            <X className="w-3 h-3" />
+                          </Button>
+                        </Badge>
+                      ))}
+                    </div>
+                  )}
+                </div>
+              )}
 
               <div className="flex items-center gap-4">
                 <Badge
@@ -167,17 +296,20 @@ export default function Home() {
                 >
                   All Commands ({userCommands.length})
                 </Badge>
-                {searchQuery && (
+                {hasActiveSearch && (
                   <Badge
                     variant={activeTab === "search" ? "default" : "secondary"}
                     className={`cursor-pointer transition-all ${
                       activeTab === "search"
-                        ? "bg-blue-600 text-white"
+                        ? searchMode === "tags"
+                          ? "bg-blue-600 text-white"
+                          : "bg-blue-600 text-white"
                         : "bg-slate-700 text-slate-300 hover:bg-slate-600"
                     }`}
                     onClick={() => setActiveTab("search")}
                   >
-                    Search Results ({searchResults.length})
+                    {searchMode === "tags" ? "Tag" : "Text"} Results (
+                    {searchResults.length})
                   </Badge>
                 )}
               </div>
@@ -206,7 +338,9 @@ export default function Home() {
                   <p className="text-slate-400">
                     {userCommands.length === 0
                       ? "Start by adding your first command"
-                      : "Try adjusting your search terms"}
+                      : searchMode === "tags"
+                      ? "Try different tags or switch to text search"
+                      : "Try adjusting your search terms or switch to tag search"}
                   </p>
                 </div>
               )}

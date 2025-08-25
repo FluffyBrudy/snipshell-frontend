@@ -87,6 +87,30 @@ export class CommandsService {
     return { commands: transformed };
   }
 
+  async searchUserCommandsByTags(
+    tags: string[]
+  ): Promise<UserCommandsResponse> {
+    const response = await this.apiClient.get<UserCommand>(
+      API_ENDPOINTS.USER_COMMAND.SEARCH_BY_TAGS,
+      { params: { tags } }
+    );
+
+    const transformed: UserCommand[] = (
+      Array.isArray(response.data) ? response.data : []
+    ).map((item: UserCommand) => ({
+      id: item.id,
+      userId: item.userId,
+      arguments: item.arguments,
+      note:
+        typeof item.note === "string" ? JSON.parse(item.note) : item.note || {},
+      createdAt: item.createdAt,
+      command: item.command,
+      tags: Array.isArray(item.tags) ? item.tags : [],
+    }));
+
+    return { commands: transformed };
+  }
+
   async createUserCommand(
     command: CreateUsercommandRequest
   ): Promise<UserCommand> {

@@ -1,9 +1,8 @@
 import { create } from "zustand";
 
 import apiClient from "@/lib/api/client.api";
-import { GenericAxiosError } from "@/types/error.types";
-import { CommandsActions, CommandStates } from "@/types/store";
-
+import type { GenericAxiosError } from "@/types/error.types";
+import type { CommandsActions, CommandStates } from "@/types/store";
 
 export const useCommandsStore = create<CommandStates & CommandsActions>(
   (set, get) => ({
@@ -80,6 +79,31 @@ export const useCommandsStore = create<CommandStates & CommandsActions>(
       }
     },
 
+    searchUserCommandsByTags: async (tags: string[], store = false) => {
+      set({ isSearching: true, error: null });
+      try {
+        const response = await apiClient.commands.searchUserCommandsByTags(
+          tags
+        );
+        if (store) {
+          set({
+            searchResults: response.commands,
+            isSearching: false,
+          });
+        } else {
+          return { commands: response.commands };
+        }
+      } catch (error: unknown) {
+        const apiError = error as GenericAxiosError;
+        set({
+          error:
+            apiError?.data?.message || "Failed to search user commands by tags",
+          isSearching: false,
+        });
+        throw error;
+      }
+    },
+
     createUserCommand: async (command) => {
       set({ isLoading: true, error: null });
       try {
@@ -99,7 +123,10 @@ export const useCommandsStore = create<CommandStates & CommandsActions>(
     editUserCommand: async (userCommandId, updateableFields) => {
       set({ isLoading: true, error: null });
       try {
-        await apiClient.commands.editUserCommand(userCommandId, updateableFields);
+        await apiClient.commands.editUserCommand(
+          userCommandId,
+          updateableFields
+        );
         await get().getUserCommands({ page: get().currentPage });
         set({ isLoading: false });
       } catch (error: unknown) {

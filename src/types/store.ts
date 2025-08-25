@@ -1,12 +1,12 @@
-import { Command, User, UserCommand } from "./entities";
-import {
+import type { Command, User, UserCommand } from "./entities";
+import type {
   CreateUsercommandRequest,
   EditUsercommandRequest,
   LoginUserRequest,
   RegisterUserRequest,
   UserCommandListRequestQuery,
 } from "./request.types";
-import { CommandsResponse, UserCommandsResponse } from "./response.types";
+import type { CommandsResponse, UserCommandsResponse } from "./response.types";
 
 export interface AuthStates {
   user: null | User;
@@ -43,6 +43,10 @@ export interface CommandsActions {
   getUserCommands: (params: UserCommandListRequestQuery) => Promise<void>;
   searchUserCommands: (
     args: string,
+    store?: boolean
+  ) => Promise<UserCommandsResponse | undefined>;
+  searchUserCommandsByTags: (
+    tags: string[],
     store?: boolean
   ) => Promise<UserCommandsResponse | undefined>;
   createUserCommand: (command: CreateUsercommandRequest) => Promise<void>;

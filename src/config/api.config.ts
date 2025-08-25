@@ -11,6 +11,7 @@ export const COMMAND_SEARCH_GET = '/api/command/search';
 export const USER_COMMAND_CREATE_POST = '/api/usercommand';
 export const USER_COMMAND_LIST_GET = '/api/usercommand';
 export const USER_COMMAND_SEARCH_GET = '/api/usercommand/search';
+export const USER_COMMAND_SEARCH_BY_TAGS = "/api/usercommand/search/tags"
 export const USER_COMMAND_EDIT_PUT = '/api/usercommand';
 
 export const AUTH_ENDPOINTS = {
@@ -27,6 +28,7 @@ export const USER_COMMAND_ENDPOINTS = {
   CREATE: USER_COMMAND_CREATE_POST,
   LIST: USER_COMMAND_LIST_GET,
   SEARCH: USER_COMMAND_SEARCH_GET,
+  SEARCH_BY_TAGS: USER_COMMAND_SEARCH_BY_TAGS,
   EDIT: USER_COMMAND_EDIT_PUT,
 } as const;
 
