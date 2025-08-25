@@ -6,7 +6,7 @@ export async function GET(request: NextRequest) {
     const command = searchParams.get("command");
 
     const response = await fetch(
-      `${process.env.API_BASE_URL}/command?command=${encodeURIComponent(
+      `${process.env.API_BASE_URL}/command/search?command=${encodeURIComponent(
         command || ""
       )}`,
       {

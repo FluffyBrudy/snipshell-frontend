@@ -6,7 +6,7 @@ export const AUTH_REFRESH_TOKEN_POST = '/api/auth/refresh-token';
 
 export const APP_STATUS_GET = '/';
 
-export const COMMAND_SEARCH_GET = '/api/command';
+export const COMMAND_SEARCH_GET = '/api/command/search';
 
 export const USER_COMMAND_CREATE_POST = '/api/usercommand';
 export const USER_COMMAND_LIST_GET = '/api/usercommand';
