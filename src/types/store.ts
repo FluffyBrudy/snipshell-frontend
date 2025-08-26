@@ -55,6 +55,9 @@ export interface CommandsActions {
     updateableFields: Partial<EditUsercommandRequest>
   ) => Promise<void>;
   deleteUserCommand: (userCommandId: UserCommand["id"]) => Promise<void>;
+  toggleUserCommandFavourite: (
+    userCommandId: UserCommand["id"]
+  ) => Promise<void>;
   clearError: () => void;
   setCurrentPage: (page: number) => void;
   clearSearchResults: () => void;

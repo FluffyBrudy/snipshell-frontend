@@ -1,9 +1,9 @@
 "use client";
 import { useState } from "react";
-import { Badge } from "lucide-react";
-import { Button } from "../ui/button";
-import { Card, CardContent } from "../ui/card";
-import { Separator } from "../ui/separator";
+import { Badge } from "@/app/components/ui/badge";
+import { Button } from "@/app/components/ui/button";
+import { Card, CardContent } from "@/app/components/ui/card";
+import { Separator } from "@/app/components/ui/separator";
 import {
   Tag,
   Calendar,
@@ -13,16 +13,17 @@ import {
   ChevronDown,
   ChevronUp,
   Terminal,
+  Star,
 } from "lucide-react";
 import { cn } from "@/lib/utils";
 import type { UserCommand } from "@/types/entities";
-import { TagList } from "./shell-tag";
 
 interface CommandCardProps {
   command: UserCommand;
   onEdit: (command: UserCommand) => void;
   onDelete: (id: number) => void;
   onTagClick: (tag: string) => void;
+  onToggleFavorite: (id: number) => void;
   index: number;
 }
 
@@ -31,6 +32,7 @@ export function CommandCard({
   onEdit,
   onDelete,
   onTagClick,
+  onToggleFavorite,
   index,
 }: CommandCardProps) {
   const [isExpanded, setIsExpanded] = useState(false);
@@ -87,7 +89,19 @@ export function CommandCard({
                 <div className="flex items-center gap-2 mb-3 flex-wrap">
                   <Tag className="w-4 h-4 text-muted-foreground flex-shrink-0" />
                   <div className="flex flex-wrap gap-2">
-                    <TagList tags={command.tags} onTagClick={onTagClick} />
+                    {command.tags.map((tag) => (
+                      <Badge
+                        key={tag.id}
+                        variant="secondary"
+                        className={cn(
+                          "cursor-pointer hover:bg-accent hover:text-accent-foreground",
+                          "transition-colors text-xs"
+                        )}
+                        onClick={() => onTagClick(tag.name)}
+                      >
+                        {tag.name}
+                      </Badge>
+                    ))}
                   </div>
                 </div>
               )}
@@ -135,6 +149,24 @@ export function CommandCard({
             </div>
 
             <div className="flex flex-col gap-2 opacity-0 group-hover:opacity-100 transition-opacity">
+              <Button
+                size="sm"
+                variant="ghost"
+                onClick={() => onToggleFavorite(command.id)}
+                className={cn(
+                  "h-8 w-8 p-0 hover:bg-yellow-500/20",
+                  command.isFavourite
+                    ? "text-yellow-500"
+                    : "text-muted-foreground"
+                )}
+              >
+                <Star
+                  className={cn(
+                    "w-4 h-4",
+                    command.isFavourite && "fill-current"
+                  )}
+                />
+              </Button>
               <Button
                 size="sm"
                 variant="ghost"

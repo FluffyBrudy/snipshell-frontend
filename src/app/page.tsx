@@ -24,7 +24,6 @@ import {
   ChevronLeft,
   ChevronRight,
   Command,
-  History,
   Star,
   Settings,
   Loader2,
@@ -47,6 +46,7 @@ export default function Home() {
     clearSearchResults,
     setCurrentPage,
     deleteUserCommand,
+    toggleUserCommandFavourite,
   } = useCommandsStore();
 
   const [activeView, setActiveView] = useState<"all" | "search" | "favorites">(
@@ -141,11 +141,19 @@ export default function Home() {
     setActiveView("all");
   };
 
-  const displayCommands =
-    activeView === "search" ? searchResults : userCommands;
+  const getDisplayCommands = () => {
+    if (activeView === "search") return searchResults;
+    if (activeView === "favorites")
+      return userCommands.filter((cmd) => cmd.isFavourite);
+    return userCommands;
+  };
+
+  const displayCommands = getDisplayCommands();
   const hasActiveSearch =
     (searchMode === "text" && searchQuery.trim()) ||
     (searchMode === "tags" && selectedTags.length > 0);
+
+  const favoriteCount = userCommands.filter((cmd) => cmd.isFavourite).length;
 
   if (!isAuthenticated) {
     return <AuthPage />;
@@ -203,22 +211,12 @@ export default function Home() {
                 <SidebarMenuButton
                   isActive={activeView === "favorites"}
                   onClick={() => setActiveView("favorites")}
-                  className="w-full justify-start opacity-50 cursor-not-allowed"
+                  className="w-full justify-start"
                 >
                   <Star className="w-4 h-4" />
                   Favorites
-                  <span className="ml-auto text-xs text-muted-foreground">
-                    Soon
-                  </span>
-                </SidebarMenuButton>
-              </SidebarMenuItem>
-
-              <SidebarMenuItem>
-                <SidebarMenuButton className="w-full justify-start opacity-50 cursor-not-allowed">
-                  <History className="w-4 h-4" />
-                  Recent
-                  <span className="ml-auto text-xs text-muted-foreground">
-                    Soon
+                  <span className="ml-auto text-xs bg-yellow-500/20 text-yellow-500 px-2 py-1 rounded-full">
+                    {favoriteCount}
                   </span>
                 </SidebarMenuButton>
               </SidebarMenuItem>
@@ -233,8 +231,10 @@ export default function Home() {
           </SidebarContent>
         </Sidebar>
 
+        {/* Main Content */}
         <SidebarInset className="flex-1">
           <div className="flex flex-col h-full">
+            {/* Header */}
             <header className="border-b border-border/50 bg-background/95 backdrop-blur-sm sticky top-0 z-10">
               <div className="flex items-center justify-between p-6">
                 <div className="flex items-center gap-4">
@@ -268,7 +268,9 @@ export default function Home() {
               </div>
             </header>
 
+            {/* Content */}
             <main className="flex-1 p-6 space-y-6 custom-scrollbar overflow-auto">
+              {/* Search Bar */}
               <Card className="glass-effect border-border/50">
                 <CardContent className="p-6">
                   <SearchBar
@@ -279,13 +281,13 @@ export default function Home() {
                     onSearchModeChange={setSearchMode}
                     onSearchQueryChange={setSearchQuery}
                     onTagSearchInputChange={setTagSearchInput}
-                    onTagAdd={(tag: string) => {
+                    onTagAdd={(tag) => {
                       if (!selectedTags.includes(tag)) {
                         setSelectedTags([...selectedTags, tag]);
                       }
                       setTagSearchInput("");
                     }}
-                    onTagRemove={(tag: string) =>
+                    onTagRemove={(tag) =>
                       setSelectedTags(selectedTags.filter((t) => t !== tag))
                     }
                     onClearAll={clearAllSearch}
@@ -294,6 +296,7 @@ export default function Home() {
                 </CardContent>
               </Card>
 
+              {/* Loading State */}
               {(isLoading || isSearching) && (
                 <div className="flex items-center justify-center py-20">
                   <div className="text-center space-y-4">
@@ -314,18 +317,27 @@ export default function Home() {
                 </div>
               )}
 
+              {/* Empty State */}
               {!isLoading && !isSearching && displayCommands.length === 0 && (
                 <div className="text-center py-20">
                   <div className="animate-float mb-6">
-                    <BookOpen className="w-20 h-20 text-muted-foreground/50 mx-auto" />
+                    {activeView === "favorites" ? (
+                      <Star className="w-20 h-20 text-muted-foreground/50 mx-auto" />
+                    ) : (
+                      <BookOpen className="w-20 h-20 text-muted-foreground/50 mx-auto" />
+                    )}
                   </div>
                   <h3 className="text-2xl font-semibold mb-2">
-                    {userCommands.length === 0
+                    {activeView === "favorites"
+                      ? "No Favorites Yet"
+                      : userCommands.length === 0
                       ? "Welcome to SnipShell!"
                       : "No Results Found"}
                   </h3>
                   <p className="text-muted-foreground mb-6 max-w-md mx-auto">
-                    {userCommands.length === 0
+                    {activeView === "favorites"
+                      ? "Star your most-used commands to quickly access them here."
+                      : userCommands.length === 0
                       ? "Start building your personal command library by adding your first command snippet."
                       : searchMode === "tags"
                       ? "Try different tags or switch to text search to find what you're looking for."
@@ -343,6 +355,7 @@ export default function Home() {
                 </div>
               )}
 
+              {/* Commands Grid */}
               {!isLoading && !isSearching && displayCommands.length > 0 && (
                 <div className="grid gap-4">
                   {displayCommands.map((command, index) => (
@@ -352,12 +365,14 @@ export default function Home() {
                       onEdit={handleEdit}
                       onDelete={deleteUserCommand}
                       onTagClick={handleTagClick}
+                      onToggleFavorite={toggleUserCommandFavourite}
                       index={index}
                     />
                   ))}
                 </div>
               )}
 
+              {/* Pagination */}
               {activeView === "all" &&
                 paginationMeta &&
                 paginationMeta.totalPages > 1 && (
@@ -402,6 +417,7 @@ export default function Home() {
         </SidebarInset>
       </div>
 
+      {/* Modals */}
       {showCreateForm && (
         <CommandForm
           onClose={() => setShowCreateForm(false)}

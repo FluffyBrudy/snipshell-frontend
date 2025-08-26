@@ -34,6 +34,7 @@ export interface UserCommandByUserIdResponse {
       createdAt: string;
       command: Command;
       tags: Tag[];
+      favouritedBy: Array<{ id: number }>;
     }[];
     page: number;
     pageSize: number;

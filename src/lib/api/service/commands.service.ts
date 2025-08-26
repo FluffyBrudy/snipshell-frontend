@@ -1,17 +1,17 @@
-import { ApiClient } from "../client.api";
-import {
+import type { ApiClient } from "../client.api";
+import type {
   CommandsResponse,
   UserCommandByUserIdResponse,
   UserCommandsResponse,
 } from "@/types/response.types";
-import { UserCommand, Command } from "@/types/entities";
-import {
+import type { UserCommand, Command } from "@/types/entities";
+import type {
   CommandRequestQuery,
   EditUsercommandRequest,
   UserCommandListRequestQuery,
   UserCommandSearchRequestQuery,
 } from "@/types/request.types";
-import { CreateUsercommandRequest } from "@/types/request.types";
+import type { CreateUsercommandRequest } from "@/types/request.types";
 import { API_ENDPOINTS } from "@/config/api.config";
 
 export class CommandsService {
@@ -36,18 +36,21 @@ export class CommandsService {
 
     if (response.data?.commands?.data) {
       const c = response.data.commands;
-      const transformed: UserCommand[] = c.data.map((item: UserCommand) => ({
-        id: item.id,
-        userId: item.userId,
-        arguments: item.arguments,
-        note:
-          typeof item.note === "string"
-            ? JSON.parse(item.note)
-            : item.note || {},
-        createdAt: item.createdAt,
-        command: item.command,
-        tags: Array.isArray(item.tags) ? item.tags : [],
-      }));
+      const transformed: UserCommand[] = c.data.map(
+        (item: UserCommandByUserIdResponse["commands"]["data"][0]) => ({
+          id: item.id,
+          userId: item.userId,
+          arguments: item.arguments,
+          note:
+            typeof item.note === "string"
+              ? JSON.parse(item.note)
+              : item.note || {},
+          createdAt: item.createdAt,
+          command: item.command,
+          tags: Array.isArray(item.tags) ? item.tags : [],
+          isFavourite: item.favouritedBy.length > 0,
+        })
+      );
       return {
         commands: transformed,
         meta: {
@@ -92,7 +95,9 @@ export class CommandsService {
   ): Promise<UserCommandsResponse> {
     const response = await this.apiClient.get<UserCommand>(
       API_ENDPOINTS.USER_COMMAND.SEARCH_BY_TAGS,
-      { params: { tags } }
+      {
+        params: { tags },
+      }
     );
 
     const transformed: UserCommand[] = (
@@ -139,7 +144,9 @@ export class CommandsService {
     const response = await this.apiClient.put<UserCommand>(
       API_ENDPOINTS.USER_COMMAND.EDIT,
       updateableFields,
-      { params: { id: userCommandId } }
+      {
+        params: { id: userCommandId },
+      }
     );
     return response.data;
   }
@@ -148,5 +155,17 @@ export class CommandsService {
     await this.apiClient.delete<void>(API_ENDPOINTS.USER_COMMAND.EDIT, {
       params: { id: userCommandId },
     });
+  }
+
+  async toggleUserCommandFavourite(
+    userCommandId: UserCommand["id"]
+  ): Promise<{ action: "ADD" | "REMOVE" }> {
+    const response = await this.apiClient.post<{ action: "ADD" | "REMOVE" }>(
+      API_ENDPOINTS.USER_COMMAND.FAVOURITE,
+      {
+        usercommandId: userCommandId,
+      }
+    );
+    return response.data;
   }
 }

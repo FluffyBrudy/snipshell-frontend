@@ -24,4 +24,5 @@ export interface UserCommand {
   createdAt: string;
   command: Command;
   tags: Tag[];
+  isFavourite?: boolean;
 }

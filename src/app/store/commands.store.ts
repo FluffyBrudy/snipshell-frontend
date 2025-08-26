@@ -3,6 +3,7 @@ import { create } from "zustand";
 import apiClient from "@/lib/api/client.api";
 import type { GenericAxiosError } from "@/types/error.types";
 import type { CommandsActions, CommandStates } from "@/types/store";
+import { UserCommand } from "@/types/entities";
 
 export const useCommandsStore = create<CommandStates & CommandsActions>(
   (set, get) => ({
@@ -150,6 +151,30 @@ export const useCommandsStore = create<CommandStates & CommandsActions>(
         set({
           error: apiError.data?.message || "Failed to delete user command",
           isLoading: false,
+        });
+        throw error;
+      }
+    },
+
+    toggleUserCommandFavourite: async (userCommandId) => {
+      try {
+        const response = await apiClient.commands.toggleUserCommandFavourite(
+          userCommandId
+        );
+
+        const updateCommand = (command: UserCommand) =>
+          command.id === userCommandId
+            ? { ...command, isFavourite: response.action === "ADD" }
+            : command;
+
+        set((state) => ({
+          userCommands: state.userCommands.map(updateCommand),
+          searchResults: state.searchResults.map(updateCommand),
+        }));
+      } catch (error: unknown) {
+        const apiError = error as GenericAxiosError;
+        set({
+          error: apiError.data?.message || "Failed to toggle favourite",
         });
         throw error;
       }
