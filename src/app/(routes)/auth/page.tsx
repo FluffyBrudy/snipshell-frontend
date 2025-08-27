@@ -32,7 +32,7 @@ export default function AuthPage() {
           <span className="terminal-dot yellow" />
           <span className="terminal-dot green" />
           <div className="ml-2 text-sm text-muted-foreground">
-            auth.tsx — snipshell
+            auth — snipshell
           </div>
         </div>
 
