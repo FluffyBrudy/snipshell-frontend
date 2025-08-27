@@ -29,7 +29,7 @@ export async function POST(request: NextRequest) {
     const data = await response.json();
     return NextResponse.json(data);
   } catch (error) {
-    console.error("[v0] Toggle favorite API error:", error);
+    console.error("Toggle favorite API error:", error);
     return NextResponse.json(
       { message: "Network error - API server may be offline" },
       { status: 500 }

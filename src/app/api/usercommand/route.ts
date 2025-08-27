@@ -34,7 +34,7 @@ export async function GET(request: NextRequest) {
     const data = await response.json();
     return NextResponse.json(data);
   } catch (error) {
-    console.error("[v0] User commands API error:", error);
+    console.error("User commands API error:", error);
     return NextResponse.json(
       { message: "Network error - API server may be offline" },
       { status: 500 }
@@ -68,7 +68,7 @@ export async function POST(request: NextRequest) {
     const data = await response.json();
     return NextResponse.json(data);
   } catch (error) {
-    console.error("[v0] Create user command API error:", error);
+    console.error(" Create user command API error:", error);
     return NextResponse.json(
       { message: "Network error - API server may be offline" },
       { status: 500 }
@@ -87,14 +87,17 @@ export async function PUT(request: NextRequest) {
         { status: 400 }
       );
     }
-    const response = await fetch(`${process.env.API_BASE_URL}/usercommand/${id}`, {
-      method: "PUT",
-      headers: {
-        "Content-Type": "application/json",
-        Authorization: request.headers.get("Authorization") || "",
-      },
-      body: JSON.stringify(body),
-    });
+    const response = await fetch(
+      `${process.env.API_BASE_URL}/usercommand/${id}`,
+      {
+        method: "PUT",
+        headers: {
+          "Content-Type": "application/json",
+          Authorization: request.headers.get("Authorization") || "",
+        },
+        body: JSON.stringify(body),
+      }
+    );
 
     if (!response.ok) {
       const errorData = await response
@@ -105,11 +108,11 @@ export async function PUT(request: NextRequest) {
         { status: response.status }
       );
     }
-    
+
     const data = await response.json();
     return NextResponse.json(data);
   } catch (error) {
-    console.error("[v0] Update user command API error:", error);
+    console.error(" Update user command API error:", error);
     return NextResponse.json(
       { message: "Network error - API server may be offline" },
       { status: 500 }
@@ -127,13 +130,16 @@ export async function DELETE(request: NextRequest) {
         { status: 400 }
       );
     }
-    const response = await fetch(`${process.env.API_BASE_URL}/usercommand/${id}`, {
-      method: "DELETE",
-      headers: {
-        "Content-Type": "application/json",
-        Authorization: request.headers.get("Authorization") || "",
-      },
-    });
+    const response = await fetch(
+      `${process.env.API_BASE_URL}/usercommand/${id}`,
+      {
+        method: "DELETE",
+        headers: {
+          "Content-Type": "application/json",
+          Authorization: request.headers.get("Authorization") || "",
+        },
+      }
+    );
 
     if (!response.ok) {
       const errorData = await response
@@ -148,7 +154,7 @@ export async function DELETE(request: NextRequest) {
     const data = await response.json();
     return NextResponse.json(data);
   } catch (error) {
-    console.error("[v0] Delete user command API error:", error);
+    console.error(" Delete user command API error:", error);
     return NextResponse.json(
       { message: "Network error - API server may be offline" },
       { status: 500 }

@@ -32,7 +32,7 @@ export async function GET(request: NextRequest) {
     const data = await response.json();
     return NextResponse.json(data);
   } catch (error) {
-    console.error("[v0] User command search API error:", error);
+    console.error("User command search API error:", error);
     return NextResponse.json(
       { message: "Network error - API server may be offline" },
       { status: 500 }
