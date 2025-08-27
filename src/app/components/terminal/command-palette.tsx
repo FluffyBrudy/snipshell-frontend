@@ -45,10 +45,9 @@ export default function CommandPalette() {
   );
 
   const handleUseCommand = (command: Command) => {
-    // Copy command to clipboard or execute it
     if (navigator.clipboard) {
       navigator.clipboard.writeText(command.command);
-      // You could add a toast notification here
+
       console.log(`Command "${command.command}" copied to clipboard`);
     }
     setShowResults(false);

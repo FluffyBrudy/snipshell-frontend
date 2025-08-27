@@ -148,16 +148,16 @@ export function CommandCard({
               )}
             </div>
 
-            <div className="flex flex-col gap-2 opacity-0 group-hover:opacity-100 transition-opacity">
+            <div className="flex flex-col gap-2 group-hover:opacity-100 transition-opacity">
               <Button
                 size="sm"
                 variant="ghost"
                 onClick={() => onToggleFavorite(command.id)}
                 className={cn(
-                  "h-8 w-8 p-0 hover:bg-yellow-500/20",
+                  "h-8 w-8 p-0 hover:bg-yellow-500/20 opacity-100",
                   command.isFavourite
-                    ? "text-yellow-500"
-                    : "text-muted-foreground"
+                    ? "text-yellow-500 opacity-100"
+                    : "text-muted-foreground opacity-100"
                 )}
               >
                 <Star
