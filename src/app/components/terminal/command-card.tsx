@@ -14,6 +14,7 @@ import {
   ChevronUp,
   Terminal,
   Star,
+  FileText,
 } from "lucide-react";
 import { cn } from "@/lib/utils";
 import type { UserCommand } from "@/types/entities";
@@ -67,6 +68,7 @@ export function CommandCard({
     >
       <CardContent className="p-6">
         <div className="space-y-4">
+          {/* Command Header */}
           <div className="flex items-start justify-between gap-4">
             <div className="flex-1 min-w-0">
               <div className="flex items-center gap-3 mb-3">
@@ -85,6 +87,7 @@ export function CommandCard({
                 </div>
               </div>
 
+              {/* Tags */}
               {command.tags.length > 0 && (
                 <div className="flex items-center gap-2 mb-3 flex-wrap">
                   <Tag className="w-4 h-4 text-muted-foreground flex-shrink-0" />
@@ -107,48 +110,58 @@ export function CommandCard({
               )}
 
               {hasNote && (
-                <div className="space-y-2">
-                  <Button
-                    variant="ghost"
-                    size="sm"
-                    onClick={() => setIsExpanded(!isExpanded)}
-                    className="h-auto p-0 text-muted-foreground hover:text-foreground"
-                  >
-                    <span className="text-sm font-medium">Description</span>
-                    {isExpanded ? (
-                      <ChevronUp className="w-4 h-4 ml-1" />
-                    ) : (
-                      <ChevronDown className="w-4 h-4 ml-1" />
-                    )}
-                  </Button>
+                <div className="space-y-3">
+                  <div className="flex items-center gap-2 p-2 bg-accent/5 rounded-lg border border-accent/20">
+                    <FileText className="w-4 h-4 text-accent flex-shrink-0" />
+                    <Button
+                      variant="ghost"
+                      size="sm"
+                      onClick={() => setIsExpanded(!isExpanded)}
+                      className="h-auto p-0 text-accent hover:text-accent/80 font-mono text-sm flex-1 justify-start"
+                    >
+                      <span className="font-medium">Description Available</span>
+                      <span className="text-xs text-muted-foreground ml-2">
+                        ({Object.keys(command.note).length} field
+                        {Object.keys(command.note).length > 1 ? "s" : ""})
+                      </span>
+                      {isExpanded ? (
+                        <ChevronUp className="w-4 h-4 ml-auto" />
+                      ) : (
+                        <ChevronDown className="w-4 h-4 ml-auto" />
+                      )}
+                    </Button>
+                  </div>
 
                   {isExpanded && (
                     <div
                       className={cn(
-                        "text-sm bg-muted/30 p-3 rounded-lg border animate-scale-in",
-                        "space-y-2"
+                        "bg-terminal-dark/50 border border-accent/30 rounded-lg p-4 animate-scale-in",
+                        "backdrop-blur-sm shadow-lg shadow-accent/5"
                       )}
                     >
-                      {Object.entries(command.note).map(([key, value]) => (
-                        <div
-                          key={key}
-                          className="flex flex-col sm:flex-row sm:items-start gap-1"
-                        >
-                          <span className="font-medium text-accent min-w-fit">
-                            {key}:
-                          </span>
-                          <span className="text-muted-foreground break-words">
-                            {value}
-                          </span>
-                        </div>
-                      ))}
+                      <div className="space-y-3">
+                        {Object.entries(command.note).map(([key, value]) => (
+                          <div key={key} className="space-y-1">
+                            <div className="flex items-center gap-2">
+                              <span className="text-accent font-mono text-sm font-medium">
+                                {key}:
+                              </span>
+                            </div>
+                            <div className="pl-4 border-l-2 border-accent/30">
+                              <span className="text-foreground/90 text-sm leading-relaxed break-words font-mono">
+                                {value}
+                              </span>
+                            </div>
+                          </div>
+                        ))}
+                      </div>
                     </div>
                   )}
                 </div>
               )}
             </div>
 
-            <div className="flex flex-col gap-2 group-hover:opacity-100 transition-opacity">
+            <div className="flex flex-col gap-2">
               <Button
                 size="sm"
                 variant="ghost"
@@ -156,8 +169,8 @@ export function CommandCard({
                 className={cn(
                   "h-8 w-8 p-0 hover:bg-yellow-500/20 opacity-100",
                   command.isFavourite
-                    ? "text-yellow-500 opacity-100"
-                    : "text-muted-foreground opacity-100"
+                    ? "text-yellow-500"
+                    : "text-muted-foreground"
                 )}
               >
                 <Star
@@ -172,8 +185,8 @@ export function CommandCard({
                 variant="ghost"
                 onClick={handleCopy}
                 className={cn(
-                  "h-8 w-8 p-0 hover:bg-accent/20",
-                  isCopied && "text-green-600"
+                  "h-8 w-8 p-0 hover:bg-accent/20 opacity-50 group-hover:opacity-100 transition-opacity",
+                  isCopied && "text-green-600 opacity-100"
                 )}
               >
                 <Copy className="w-4 h-4" />
@@ -182,7 +195,7 @@ export function CommandCard({
                 size="sm"
                 variant="ghost"
                 onClick={() => onEdit(command)}
-                className="h-8 w-8 p-0 hover:bg-accent/20"
+                className="h-8 w-8 p-0 hover:bg-accent/20 opacity-50 group-hover:opacity-100 transition-opacity"
               >
                 <Edit3 className="w-4 h-4" />
               </Button>
@@ -190,7 +203,7 @@ export function CommandCard({
                 size="sm"
                 variant="ghost"
                 onClick={() => onDelete(command.id)}
-                className="h-8 w-8 p-0 hover:bg-destructive/20 hover:text-destructive"
+                className="h-8 w-8 p-0 hover:bg-destructive/20 hover:text-destructive opacity-50 group-hover:opacity-100 transition-opacity"
               >
                 <Trash2 className="w-4 h-4" />
               </Button>
@@ -199,6 +212,7 @@ export function CommandCard({
 
           <Separator className="opacity-50" />
 
+          {/* Footer */}
           <div className="flex items-center justify-between text-sm text-muted-foreground">
             <div className="flex items-center gap-2">
               <Calendar className="w-4 h-4" />
