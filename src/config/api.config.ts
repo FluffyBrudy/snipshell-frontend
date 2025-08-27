@@ -2,6 +2,7 @@ export const API_BASE_URL = process.env.NEXT_PUBLIC_API_URL;
 
 export const AUTH_REGISTER_POST = "/api/auth/register";
 export const AUTH_LOGIN_POST = "/api/auth/login";
+export const AUTH_LOGOUT_POST = "/api/auth/logout";
 export const AUTH_REFRESH_TOKEN_POST = "/api/auth/refresh-token";
 
 export const APP_STATUS_GET = "/";
@@ -18,6 +19,7 @@ export const USER_COMMAND_FAVOURITE_POST = "/api/usercommand/favourite";
 export const AUTH_ENDPOINTS = {
   REGISTER: AUTH_REGISTER_POST,
   LOGIN: AUTH_LOGIN_POST,
+  LOGOUT: AUTH_LOGOUT_POST,
   REFRESH_TOKEN: AUTH_REFRESH_TOKEN_POST,
 } as const;
 

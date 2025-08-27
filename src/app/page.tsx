@@ -27,13 +27,14 @@ import {
   Star,
   Settings,
   Loader2,
+  LogOut,
 } from "lucide-react";
 import AuthPage from "@/app/(routes)/auth/page";
 import type { UserCommand } from "@/types/entities";
 import { CommandForm } from "@/app/components/terminal/command-form";
 
 export default function Home() {
-  const { isAuthenticated } = useAuthStore();
+  const { isAuthenticated, logout } = useAuthStore();
   const {
     userCommands,
     searchResults,
@@ -229,14 +230,23 @@ export default function Home() {
                   Settings
                 </SidebarMenuButton>
               </SidebarMenuItem>
+
+              <SidebarMenuItem>
+                <SidebarMenuButton
+                  isActive={activeView === "favorites"}
+                  onClick={logout}
+                  className="w-full justify-start cursor-pointer"
+                >
+                  <LogOut className="w-4 h-4" />
+                  Logout
+                </SidebarMenuButton>
+              </SidebarMenuItem>
             </SidebarMenu>
           </SidebarContent>
         </Sidebar>
 
-        {/* Main Content */}
         <SidebarInset className="flex-1">
           <div className="flex flex-col h-full">
-            {/* Header */}
             <header className="border-b border-border/50 bg-background/95 backdrop-blur-sm sticky top-0 z-10">
               <div className="flex items-center justify-between p-6">
                 <div className="flex items-center gap-4">
@@ -270,9 +280,7 @@ export default function Home() {
               </div>
             </header>
 
-            {/* Content */}
             <main className="flex-1 p-6 space-y-6 custom-scrollbar overflow-auto">
-              {/* Search Bar */}
               <Card className="glass-effect border-border/50">
                 <CardContent className="p-6">
                   <SearchBar
@@ -298,7 +306,6 @@ export default function Home() {
                 </CardContent>
               </Card>
 
-              {/* Loading State */}
               {(isLoading || isSearching) && (
                 <div className="flex items-center justify-center py-20">
                   <div className="text-center space-y-4">
@@ -319,7 +326,6 @@ export default function Home() {
                 </div>
               )}
 
-              {/* Empty State */}
               {!isLoading && !isSearching && displayCommands.length === 0 && (
                 <div className="text-center py-20">
                   <div className="animate-float mb-6">
@@ -357,7 +363,6 @@ export default function Home() {
                 </div>
               )}
 
-              {/* Commands Grid */}
               {!isLoading && !isSearching && displayCommands.length > 0 && (
                 <div className="grid gap-4">
                   {displayCommands.map((command, index) => (
@@ -374,7 +379,6 @@ export default function Home() {
                 </div>
               )}
 
-              {/* Pagination */}
               {activeView === "all" &&
                 paginationMeta &&
                 paginationMeta.totalPages > 1 && (
@@ -419,7 +423,6 @@ export default function Home() {
         </SidebarInset>
       </div>
 
-      {/* Modals */}
       {showCreateForm && (
         <CommandForm
           onClose={() => setShowCreateForm(false)}

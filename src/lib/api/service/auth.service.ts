@@ -29,4 +29,11 @@ export class AuthService {
     );
     return response.data;
   }
+
+  async logout(): Promise<{ message: string }> {
+    const response = await this.apiClient.post<{ message: string }>(
+      API_ENDPOINTS.AUTH.LOGOUT
+    );
+    return response.data;
+  }
 }

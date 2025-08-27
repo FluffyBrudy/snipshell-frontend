@@ -22,7 +22,7 @@ export interface AuthActions {
   refreshToken: () => Promise<void>;
   onvisit: () => Promise<void>;
   clearError: () => void;
-  logout: () => void;
+  logout: () => Promise<void>;
 }
 
 export interface CommandStates {

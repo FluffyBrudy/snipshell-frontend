@@ -24,6 +24,15 @@ export default function AuthPage() {
     } catch {}
   };
 
+  const handleGuestLogin = async () => {
+    try {
+      await login({
+        email: "guest@gamail.com", // this is pseudo user credentials for guest login
+        password: "Guestuser$99", // this is pseudo user credentials for guest login
+      });
+    } catch {}
+  };
+
   return (
     <div className="matrix-bg min-h-screen flex items-center justify-center p-6">
       <div className="w-full max-w-md command-card rounded-xl overflow-hidden terminal-boot">
@@ -110,6 +119,23 @@ export default function AuthPage() {
                 "Login"
               ) : (
                 "Register"
+              )}
+            </button>
+
+            <button
+              type="button"
+              onClick={handleGuestLogin}
+              disabled={isLoading}
+              className="terminal-button w-full rounded-md py-2 text-sm font-semibold disabled:opacity-60 disabled:cursor-not-allowed mt-2"
+              aria-label="Login as Guest"
+            >
+              {isLoading ? (
+                <span className="inline-flex items-center justify-center gap-2">
+                  <span className="terminal-spinner" aria-hidden="true" />
+                  <span>Signing in guest...</span>
+                </span>
+              ) : (
+                "Login as Guest"
               )}
             </button>
           </form>

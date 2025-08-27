@@ -49,7 +49,8 @@ export const useAuthStore = create<AuthStates & AuthActions>((set, get) => ({
     }
   },
 
-  logout: () => {
+  logout: async () => {
+    await apiClient.auth.logout();
     apiClient.clearAuthToken();
     set({
       user: null,
