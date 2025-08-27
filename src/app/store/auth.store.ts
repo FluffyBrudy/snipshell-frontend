@@ -79,7 +79,12 @@ export const useAuthStore = create<AuthStates & AuthActions>((set, get) => ({
   onvisit: async () => {
     const token = localStorage.getItem("accessToken");
     if (token) {
-      set({ isAuthenticated: true });
+      await get()
+        .refreshToken()
+        .then(() => {
+          set({ isAuthenticated: true });
+        })
+        .catch();
     }
   },
 }));
