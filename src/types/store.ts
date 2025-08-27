@@ -20,6 +20,7 @@ export interface AuthActions {
   register: (userData: RegisterUserRequest) => Promise<void>;
   setUser: (user: User) => void;
   refreshToken: () => Promise<void>;
+  onvisit: () => Promise<void>;
   clearError: () => void;
   logout: () => void;
 }

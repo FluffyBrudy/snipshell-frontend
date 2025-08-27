@@ -75,4 +75,11 @@ export const useAuthStore = create<AuthStates & AuthActions>((set, get) => ({
   setUser: (user) => {
     set({ user, isAuthenticated: true });
   },
+
+  onvisit: async () => {
+    const token = localStorage.getItem("accessToken");
+    if (token) {
+      set({ isAuthenticated: true });
+    }
+  },
 }));

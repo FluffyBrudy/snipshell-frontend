@@ -48,7 +48,7 @@ export default function Home() {
     deleteUserCommand,
     toggleUserCommandFavourite,
   } = useCommandsStore();
-
+  const onvisit = useAuthStore((state) => state.onvisit);
   const [activeView, setActiveView] = useState<"all" | "search" | "favorites">(
     "all"
   );
@@ -70,8 +70,10 @@ export default function Home() {
   useEffect(() => {
     if (isAuthenticated) {
       getUserCommands({ page: 1 });
+    } else {
+      onvisit();
     }
-  }, [isAuthenticated, getUserCommands]);
+  }, [isAuthenticated, getUserCommands, onvisit]);
 
   useEffect(() => {
     if (searchMode === "text" && searchQuery.trim()) {
